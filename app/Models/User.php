@@ -45,4 +45,37 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function admin()
+    {
+        /**
+        * Defines the relationship between the user and the admin.
+        *
+        * This function establishes a "hasOne" relationship between the User model and the Admin model,
+        * indicating that a user may have one admin profile.
+        */
+        return $this->hasOne(Admin::class);
+    }
+
+    public function receptionist()
+    {
+        /**
+        * Defines the relationship between the user and the receptionist.
+        * 
+        * This function establishes a "hasOne" relationship between the User model and the Receptionist model,
+        * indicating that a user may have one receptionist profile.
+        */
+        return $this->hasOne(Receptionist::class);
+    }
+
+    public function doctor()
+    {
+        /**
+        * Defines the relationship between the user and the doctor.
+        *
+        * This function establishes a "hasOne" relationship between the User model and the Doctor model,
+        * indicating that a user may have one doctor profile.
+        */
+        return $this->hasOne(Doctor::class);
+    }
 }
