@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->date('appointment_date');
             $table->string('status');
-            $table->text('notes')->nullable();
+            $table->decimal('value', 8, 2);
             $table->timestamps();
 
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');

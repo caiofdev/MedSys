@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('receptionists', function (Blueprint $table) {
             $table->id();
             $table->string('registration_number')->unique();
-            $table->string('phone');
             $table->timestamps();
 
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');

@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('symptoms');
             $table->string('diagnosis');
             $table->text('notes')->nullable();
-            $table->date('consultation_date');
             $table->timestamps();
 
             $table->foreignId('appointment_id')->constrained('appointments')->onDelete('cascade');
