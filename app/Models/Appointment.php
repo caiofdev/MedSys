@@ -46,4 +46,15 @@ class Appointment extends Model
         */
         return $this->hasOne(Consultation::class);
     }
+
+    public function payment()
+    {
+        /**
+        * Defines the relationship between the appointment and the payment.
+        *
+        * This function establishes a "hasOne" relationship between the Appointment model and the Payment model,
+        * indicating that an appointment can have one payment.
+        */
+        return $this->hasOne(Payment::class);
+    }
 }
