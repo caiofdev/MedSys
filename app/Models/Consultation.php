@@ -10,7 +10,6 @@ class Consultation extends Model
         'symptoms',
         'diagnosis',
         'notes',
-        'consultation_date',
         'appointment_id',
     ];
 

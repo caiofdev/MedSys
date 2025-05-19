@@ -8,7 +8,6 @@ class Doctor extends Model
 {
     protected $fillable = [
         'crm',
-        'phone',
         'user_id',
         'specialty_id',
     ];
