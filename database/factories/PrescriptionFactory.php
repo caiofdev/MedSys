@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\Consultation;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Prescription>
@@ -21,7 +20,6 @@ class PrescriptionFactory extends Factory
             'medication_name' => $this->faker->word(),
             'dosage' => $this->faker->numberBetween(1, 100) . ' mg',
             'instructions' => $this->faker->sentence(),
-            'consultation_id' => Consultation::factory(),
         ];
     }
 }

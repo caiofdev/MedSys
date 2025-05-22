@@ -18,12 +18,15 @@ class AppointmentFactory extends Factory
      */
     public function definition(): array
     {
+        $doctorIds = Doctor::pluck('id')->toArray();
+        $patientIds = Patient::pluck('id')->toArray();
+
         return [
             'appointment_date' => $this->faker->dateTimeBetween('-1 month', '+1 month'),
             'status' => $this->faker->randomElement(['scheduled', 'completed', 'canceled']),
             'value' => $this->faker->randomFloat(2, 50, 500),
-            'patient_id' => Patient::factory(),
-            'doctor_id' => Doctor::factory(),
+            'patient_id' => $this->faker->randomElement($patientIds),
+            'doctor_id' => $this->faker->randomElement($doctorIds),
         ];
     }
 }

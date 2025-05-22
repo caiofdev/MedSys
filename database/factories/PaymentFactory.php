@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\Appointment;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Payment>
@@ -23,7 +22,6 @@ class PaymentFactory extends Factory
             'payment_method' => $this->faker->randomElement(['credit_card', 'paypal', 'bank_transfer']),
             'transaction_code' => $this->faker->uuid(),
             'payload' => json_encode($this->faker->words(3)),
-            'appointment_id' => Appointment::factory(),
         ];
     }
 }

@@ -21,7 +21,6 @@ class ConsultationFactory extends Factory
             'symptoms' => $this->faker->sentence(),
             'diagnosis' => $this->faker->sentence(),
             'notes' => $this->faker->paragraph(),
-            'appointment_id' => Appointment::factory(), 
         ];
     }
 }
