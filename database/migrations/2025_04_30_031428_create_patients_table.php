@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('cpf')->unique();
             $table->string('rg')->unique();
             $table->date('birth_date');
-            $table->enum('gender', ['Masculino', 'Feminino', 'Outro']);
+            $table->enum('gender', ['Male', 'Female', 'Other']);
             $table->string('phone');
             $table->string('emergency_contact_phone');
             $table->text('medical_history')->nullable();
