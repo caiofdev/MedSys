@@ -10,6 +10,7 @@ class Admin extends Model
     use HasFactory;
 
     protected $fillable = [
+        'is_master',
         'user_id',
     ];
 

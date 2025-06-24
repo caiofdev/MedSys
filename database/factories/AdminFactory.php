@@ -18,6 +18,7 @@ class AdminFactory extends Factory
     public function definition(): array
     {
         return [
+            'is_master' => false,
             'user_id' => User::factory(),
         ];
     }
