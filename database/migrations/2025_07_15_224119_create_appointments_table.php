@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
-            $table->date('appointment_date');
+            $table->dateTime('appointment_date');
             $table->enum('status', ['scheduled', 'completed', 'canceled'])->default('scheduled');
             $table->decimal('value', 10, 2);
             $table->timestamps();
