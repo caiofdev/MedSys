@@ -31,7 +31,7 @@ class Appointment extends Model
     public function receptionist()
     {
         return $this->belongsTo(Receptionist::class)->withDefault([
-            'name' => 'Recepcionista não informado.'
+            'name' => 'Receptionist not informed.'
         ]);
     }
 

@@ -22,7 +22,7 @@ class Doctor extends Model
 
     public function specialty()
     {
-        return $this->belongsTo(Speciality::class);
+        return $this->belongsTo(Specialty::class);
     }
 
     public function appointments()
