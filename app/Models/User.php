@@ -20,7 +20,11 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'cpf',
         'password',
+        'birth_date',
+        'phone',
+        'photo',
     ];
 
     /**
@@ -44,5 +48,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function admin()
+    {
+        return $this->hasOne(Admin::class);
+    }
+
+    public function receptionist()
+    {
+        return $this->hasOne(Receptionist::class);
+    }
+
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class);
     }
 }
