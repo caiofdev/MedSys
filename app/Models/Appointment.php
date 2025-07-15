@@ -30,9 +30,7 @@ class Appointment extends Model
 
     public function receptionist()
     {
-        return $this->belongsTo(Receptionist::class)->withDefault([
-            'name' => 'Receptionist not informed.'
-        ]);
+        return $this->belongsTo(Receptionist::class);
     }
 
     public function consultation()

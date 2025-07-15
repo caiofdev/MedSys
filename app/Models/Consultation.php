@@ -21,9 +21,9 @@ class Consultation extends Model
         return $this->belongsTo(Appointment::class);
     }
 
-    public function prescription()
+    public function prescriptions()
     {
-        return $this->hasOne(Prescription::class);
+        return $this->hasMany(Prescription::class);
     }
 
     public function exams()
