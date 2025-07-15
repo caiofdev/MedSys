@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('cpf')->unique();
             $table->enum('gender', ['male', 'female', 'other']);
+            $table->string('phone');
             $table->date('birth_date');
             $table->string('emergency_contact');
             $table->text('medical_history')->nullable();
