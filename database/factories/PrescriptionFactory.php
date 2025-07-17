@@ -7,34 +7,13 @@ use App\Models\Consultation;
 
 class PrescriptionFactory extends Factory
 {
-    private static $usedConsultationIds = [];
-
     public function definition(): array
     {
         return [
             'medication' => $this->faker->word(),
             'dosage' => $this->faker->numberBetween(1, 100) . ' mg',
             'instructions' => $this->faker->sentence(),
-            'consultation_id' => $this->getUniqueConsultationId(),
+            'consultation_id' => getUniqueModelId(Consultation::class, 'consultation_prescription'),
         ];
-    }
-
-    private function getUniqueConsultationId()
-    {
-        $availableIds = Consultation::pluck('id')
-            ->diff(self::$usedConsultationIds)
-            ->values()
-            ->toArray();
-
-        if (empty($availableIds)) {
-            self::$usedConsultationIds = [];
-            $availableIds = Consultation::pluck('id')->toArray();
-        }
-
-        $selectedId = $this->faker->randomElement($availableIds);
-        
-        self::$usedConsultationIds[] = $selectedId;
-
-        return $selectedId;
     }
 }

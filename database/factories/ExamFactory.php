@@ -7,34 +7,13 @@ use App\Models\Consultation;
 
 class ExamFactory extends Factory
 {
-    private static $usedConsultationIds = [];
-
     public function definition(): array
     {
         return [
             'exam_type' => $this->faker->word(),
             'result' => $this->faker->sentence(),
             'exam_file' => $this->faker->filePath(),
-            'consultation_id' => $this->getUniqueConsultationId(),
+            'consultation_id' => getUniqueModelId(Consultation::class, 'consultation_exam'),
         ];
     }
-
-    private function getUniqueConsultationId()
-    {
-        $availableIds = Consultation::pluck('id')
-            ->diff(self::$usedConsultationIds)
-            ->values()
-            ->toArray();
-
-        if (empty($availableIds)) {
-            self::$usedConsultationIds = [];
-            $availableIds = Consultation::pluck('id')->toArray();
-        }
-
-        $selectedId = $this->faker->randomElement($availableIds);
-        
-        self::$usedConsultationIds[] = $selectedId;
-
-        return $selectedId;
-    }    
 }
