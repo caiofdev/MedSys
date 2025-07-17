@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Consultation;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ConsultationSeeder extends Seeder
