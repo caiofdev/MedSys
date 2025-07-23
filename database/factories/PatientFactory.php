@@ -3,24 +3,22 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use App\Models\Address;
 
-class UserFactory extends Factory
+class PatientFactory extends Factory
 {
-    protected static ?string $password;
-
     public function definition(): array
     {
         return [
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
             'cpf' => $this->faker->unique()->numerify('###########'),
-            'password' => static::$password ??= Hash::make('password'),
-            'birth_date' => $this->faker->date(),
+            'gender' => $this->faker->randomElement(['male', 'female', 'other']),
             'phone' => $this->faker->phoneNumber(),
-            'photo' => $this->faker->imageUrl(),
-            'remember_token' => Str::random(10),
+            'birth_date' => $this->faker->date(),
+            'emergency_contact' => $this->faker->phoneNumber(),
+            'medical_history' => $this->faker->text(200),
+            'address_id' => Address::factory(),
         ];
     }
 }
