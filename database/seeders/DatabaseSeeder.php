@@ -13,7 +13,6 @@ class DatabaseSeeder extends Seeder
             ReceptionistSeeder::class,
             DoctorSeeder::class,
             PatientSeeder::class,
-            AppointmentSeeder::class,
             ConsultationSeeder::class,
             PrescriptionSeeder::class,
             ExamSeeder::class,
