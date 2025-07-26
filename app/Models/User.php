@@ -47,4 +47,48 @@ class User extends Authenticatable
     {
         return $this->hasOne(Doctor::class);
     }
+
+    public function getUserType(): ?string
+    {
+        if ($this->relationLoaded('admin') && $this->admin) {
+            return 'admin';
+        }
+        
+        if ($this->relationLoaded('doctor') && $this->doctor) {
+            return 'doctor';
+        }
+        
+        if ($this->relationLoaded('receptionist') && $this->receptionist) {
+            return 'receptionist';
+        }
+        
+        if ($this->admin()->exists()) {
+            return 'admin';
+        }
+        
+        if ($this->doctor()->exists()) {
+            return 'doctor';
+        }
+        
+        if ($this->receptionist()->exists()) {
+            return 'receptionist';
+        }
+        
+        return null;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->admin()->exists();
+    }
+
+    public function isDoctor(): bool
+    {
+        return $this->doctor()->exists();
+    }
+
+    public function isReceptionist(): bool
+    {
+        return $this->receptionist()->exists();
+    }
 }

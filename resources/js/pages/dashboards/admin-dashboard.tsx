@@ -16,26 +16,55 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function AdminDashboard() {
+// Definir a interface para os dados recebidos do backend
+interface AdminDashboardProps {
+    user: {
+        name: string;
+        avatar: string;
+        role: string;
+        is_master: boolean;
+    };
+    stats: {
+        total_admins: number;
+        total_doctors: number;
+        total_receptionists: number;
+        total_users: number;
+    };
+    recent_activities: any[];
+}
+
+export default function AdminDashboard({ user, stats, recent_activities }: AdminDashboardProps) {
     return (
     <AppLayout breadcrumbs={breadcrumbs}>
         <Head title="Admin Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-6 pr-10 pl-10 overflow-x-auto">
                 <div className="flex flex-col gap-4 h-full">
                     <div className="grid grid-cols-3 gap-4">
-                        <DashboardHeader userName="Caio Fernandes" imgPath="/admin-pic.png" />
-                        <DashboardProfile userName="Caio Fernandes" imgPath="/default-user.png" type='ADMINISTRADOR' />
+                        <DashboardHeader userName={user.name} imgPath="/admin-pic.png" />
+                        <DashboardProfile userName={user.name} imgPath={user.avatar} type={user.role} />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-2 grid grid-cols-3 gap-4 h-50">
-                            <DashboardCard icon={faShieldHalved} title="Administradores" color="0D6EFD"/>
-                            <DashboardCard icon={faStethoscope} title="Doutores" color="198754"/>
-                            <DashboardCard icon={faIdBadge} title="Recepcionistas" color="6F42C1"/>
+                            <DashboardCard 
+                                icon={faShieldHalved} 
+                                title={`Administradores (${stats.total_admins})`} 
+                                color="0D6EFD"
+                            />
+                            <DashboardCard 
+                                icon={faStethoscope} 
+                                title={`Doutores (${stats.total_doctors})`} 
+                                color="198754"
+                            />
+                            <DashboardCard 
+                                icon={faIdBadge} 
+                                title={`Recepcionistas (${stats.total_receptionists})`} 
+                                color="6F42C1"
+                            />
                         </div>
                         <DashboardPieChart
                             title="Usuários do Sistema"
                             labels={['Administradores', 'Doutores', 'Recepcionistas']}
-                            data={[2, 10, 5]}
+                            data={[stats.total_admins, stats.total_doctors, stats.total_receptionists]}
                             colors={['0D6EFD', '198754', '6F42C1']}
                         />
                     </div>

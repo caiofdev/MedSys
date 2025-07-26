@@ -16,28 +16,57 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function ReceptionistDashboard() {
+// Interface para os dados da recepcionista
+interface ReceptionistDashboardProps {
+    user: {
+        name: string;
+        avatar: string;
+        role: string;
+        registration_number: string;
+    };
+    daily_summary: {
+        appointments_today: number;
+        completed_today: number;
+        pending_today: number;
+        cancelled_today: number;
+    };
+    weekly_appointments: any[];
+}
+
+export default function ReceptionistDashboard({ user, daily_summary, weekly_appointments }: ReceptionistDashboardProps) {
     return (
     <AppLayout breadcrumbs={breadcrumbs}>
         <Head title="Recepcionist Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-6 pr-10 pl-10 overflow-x-auto">
                 <div className="flex flex-col gap-4 h-full">
                     <div className="grid grid-cols-3 gap-4">
-                        <DashboardHeader userName="Caio Fernandes" imgPath="/recepcionist-pic.png" />
-                        <DashboardProfile userName="Caio Fernandes" imgPath="/default-user.png" type='RECEPCIONISTA' />
+                        <DashboardHeader userName={user.name} imgPath="/recepcionist-pic.png" />
+                        <DashboardProfile userName={user.name} imgPath={user.avatar} type={user.role} />
                     </div>
                     <div className="grid grid-cols-3 gap-4 h-40">
-                            <DashboardCard icon={faUsers} title={"Pacientes"} color="F46248"/>
-                            <DashboardCard icon={faCalendar} title={"Agendar Consulta"} color="F46248"/>
-                            <DashboardCard icon={faFileMedical} title={"Visualizar Consulta"} color='F46248' />
+                            <DashboardCard 
+                                icon={faUsers} 
+                                title={`Consultas Hoje (${daily_summary.appointments_today})`} 
+                                color="F46248"
+                            />
+                            <DashboardCard 
+                                icon={faCalendar} 
+                                title={`Pendentes (${daily_summary.pending_today})`} 
+                                color="F46248"
+                            />
+                            <DashboardCard 
+                                icon={faFileMedical} 
+                                title={`Concluídas (${daily_summary.completed_today})`} 
+                                color='F46248' 
+                            />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <DashboardSummary
                             title="Resumo do Dia"
-                            labels={['Consultas do Dia', 'Atendidos', 'Faltas']}
-                            data={[10, 8, 2]}
+                            labels={['Consultas do Dia', 'Atendidos', 'Cancelados']}
+                            data={[daily_summary.appointments_today, daily_summary.completed_today, daily_summary.cancelled_today]}
                         />
-                        <DashboardCalendar title="Consultas das Semana"/>
+                        <DashboardCalendar title="Consultas da Semana"/>
                     </div>
                 </div>
             </div>
