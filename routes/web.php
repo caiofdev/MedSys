@@ -8,6 +8,23 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
+Route::get('/admin-table', function () {
+    return Inertia::render('tables/admin-table');
+})->name('admin-table');
+
+Route::get('/doctor-table', function () {
+    return Inertia::render('tables/doctor-table');
+})->name('doctor-table');
+
+Route::get('/patient-table', function () {
+    return Inertia::render('tables/patient-table');
+})->name('patient-table');
+
+Route::get('/receptionist-table', function () {
+    return Inertia::render('tables/receptionist-table');
+})->name('receptionist-table');
+
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('admin/dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard')->middleware('user.type:admin');
