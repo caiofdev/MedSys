@@ -46,16 +46,19 @@ export default function DoctorDashboard({ user, appointments, upcoming_appointme
                                 icon={faCirclePlay} 
                                 title="Iniciar Atendimento"
                                 color="198754"
+                                route="/"
                             />
                             <DashboardCard 
                                 icon={faClipboard} 
-                                title={`Consultas Hoje (${appointments.today})`} 
+                                title={"Visualizar Prontuários"} 
                                 color="D63384"
+                                route="/"
                             />
                             <DashboardCard 
                                 icon={faFileMedical} 
-                                title={`Consultas Mês (${appointments.month})`} 
+                                title={"Solicitar Exames"} 
                                 color="FFC107"
+                                route="/"
                             />
                         </div>
                         <DashboardCalendar title='Meu Calendário'/>

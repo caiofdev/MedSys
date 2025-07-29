@@ -16,7 +16,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Interface para os dados da recepcionista
 interface ReceptionistDashboardProps {
     user: {
         name: string;
@@ -46,18 +45,21 @@ export default function ReceptionistDashboard({ user, daily_summary, weekly_appo
                     <div className="grid grid-cols-3 gap-4 h-40">
                             <DashboardCard 
                                 icon={faUsers} 
-                                title={`Consultas Hoje (${daily_summary.appointments_today})`} 
+                                title={"Pacientes"} 
                                 color="F46248"
+                                route="/patient-table"
                             />
                             <DashboardCard 
                                 icon={faCalendar} 
-                                title={`Pendentes (${daily_summary.pending_today})`} 
+                                title={"Agendar Consulta"} 
                                 color="F46248"
+                                route="/"
                             />
                             <DashboardCard 
                                 icon={faFileMedical} 
-                                title={`Concluídas (${daily_summary.completed_today})`} 
-                                color='F46248' 
+                                title={"Visualizar Consultas"} 
+                                color='F46248'
+                                route="/"
                             />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
