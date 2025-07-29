@@ -8,6 +8,7 @@ import DashboardProfile from '@/components/dashboard-user-profile';
 import DashboardPieChart from '@/components/dashboard-pie-charts';
 import DashboardTotal from '@/components/dashboard-monthly-total';
 import DashboardMonthlySales from '@/components/dashboard-monthly-sales';
+import { router } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -16,7 +17,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Definir a interface para os dados recebidos do backend
 interface AdminDashboardProps {
     user: {
         name: string;
@@ -47,18 +47,21 @@ export default function AdminDashboard({ user, stats, recent_activities }: Admin
                         <div className="col-span-2 grid grid-cols-3 gap-4 h-50">
                             <DashboardCard 
                                 icon={faShieldHalved} 
-                                title={`Administradores (${stats.total_admins})`} 
+                                title={"Administradores"} 
                                 color="0D6EFD"
+                                route="/admin-table"
                             />
                             <DashboardCard 
                                 icon={faStethoscope} 
-                                title={`Doutores (${stats.total_doctors})`} 
+                                title={"Doutores"} 
                                 color="198754"
+                                route="/doctor-table"
                             />
                             <DashboardCard 
                                 icon={faIdBadge} 
-                                title={`Recepcionistas (${stats.total_receptionists})`} 
+                                title={"Recepcionistas"} 
                                 color="6F42C1"
+                                route="/receptionist-table"
                             />
                         </div>
                         <DashboardPieChart
