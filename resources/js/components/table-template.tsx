@@ -1,6 +1,7 @@
 
-import { faEye, faPencil, faTrashCan, faMagnifyingGlass, faCirclePlus} from '@fortawesome/free-solid-svg-icons'
+import { faEye, faPencil, faTrashCan, faCirclePlus} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Search } from 'lucide-react';
 import SearchBox from './ui/search-box';
 
 interface User {
@@ -16,8 +17,7 @@ interface TableProps {
 export default function Table({ users }: TableProps) {
     return (
             <div className='flex flex-col gap-5'>
-                <div className='flex flex-row justify-between ml-30 mr-30'>
-                    <SearchBox placeHolder="Buscar..."/>
+                <div className='flex flex-row justify-end ml-30 mr-30'>
                     <div className='flex items-center justify-center text-4xl hover:scale-110 hover:text-[#030d29e1] transition duration-200 cursor-pointer '>
                         <FontAwesomeIcon icon={faCirclePlus}/>
                     </div>
