@@ -8,7 +8,6 @@ import DashboardProfile from '@/components/dashboard-user-profile';
 import DashboardPieChart from '@/components/dashboard-pie-charts';
 import DashboardTotal from '@/components/dashboard-monthly-total';
 import DashboardMonthlySales from '@/components/dashboard-monthly-sales';
-import { router } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -49,19 +48,19 @@ export default function AdminDashboard({ user, stats, recent_activities }: Admin
                                 icon={faShieldHalved} 
                                 title={"Administradores"} 
                                 color="0D6EFD"
-                                route="/admin-table"
+                                route="/admin/admins"
                             />
                             <DashboardCard 
                                 icon={faStethoscope} 
                                 title={"Doutores"} 
                                 color="198754"
-                                route="/doctor-table"
+                                route="/admin/doctors"
                             />
                             <DashboardCard 
                                 icon={faIdBadge} 
                                 title={"Recepcionistas"} 
                                 color="6F42C1"
-                                route="/receptionist-table"
+                                route="/admin/receptionists"
                             />
                         </div>
                         <DashboardPieChart
