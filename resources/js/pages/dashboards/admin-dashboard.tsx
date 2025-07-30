@@ -54,13 +54,13 @@ export default function AdminDashboard({ user, stats, recent_activities }: Admin
                                 icon={faStethoscope} 
                                 title={"Doutores"} 
                                 color="198754"
-                                route="/doctor-table"
+                                route="/admin/doctors"
                             />
                             <DashboardCard 
                                 icon={faIdBadge} 
                                 title={"Recepcionistas"} 
                                 color="6F42C1"
-                                route="/receptionist-table"
+                                route="/admin/receptionists"
                             />
                         </div>
                         <DashboardPieChart
