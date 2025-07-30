@@ -10,7 +10,7 @@ interface SearchBoxProps {
 
 export default function SearchBox({ placeHolder, value = '', onChange }: SearchBoxProps) {
     return(
-        <div className="w-full max-w-md ml-30">
+        <div className="w-full max-w-md">
             <label htmlFor="search" className="sr-only">Pesquisar</label>
             <div className="relative">
                 <input

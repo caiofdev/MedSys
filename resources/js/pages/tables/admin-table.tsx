@@ -5,6 +5,8 @@ import { Head, router } from '@inertiajs/react';
 import Pagination from '../../components/pagination';
 import SearchBox from '../../components/ui/search-box';
 import { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCirclePlus } from '@fortawesome/free-solid-svg-icons';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -76,12 +78,17 @@ export default function AdminTable({ admins, filters }: AdminTableProps) {
     return(
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Admin Table" />
-            <div className="space-y-6">
-                <SearchBox 
-                    placeHolder="Buscar por nome do administrador..." 
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                />
+            <div className="flex flex-col space-y-6 justify-center mt-5">
+                <div className='flex flex-row justify-between ml-30 mr-30'>
+                    <SearchBox 
+                        placeHolder="Buscar por nome do administrador..." 
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                    />
+                    <div className='flex items-center justify-center text-4xl hover:scale-110 hover:text-[#030d29e1] transition duration-200 cursor-pointer '>
+                        <FontAwesomeIcon icon={faCirclePlus}/>
+                    </div>
+                </div>
                 
                 <Table users={tableData} />
                 
