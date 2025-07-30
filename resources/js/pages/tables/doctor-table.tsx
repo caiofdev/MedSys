@@ -26,13 +26,8 @@ interface User {
 
 interface Doctor {
     id: number;
-    crm: string;
     user_id: number;
     user: User;
-    specialty: {
-        id: number;
-        name: string;
-    };
 }
 
 interface PaginatedDoctors {
@@ -59,7 +54,6 @@ export default function DoctorTable({ doctors, filters }: DoctorTableProps) {
         name: doctor.user.name,
         email: doctor.user.email,
         phone: doctor.user.phone,
-        specialty: doctor.specialty?.name || 'N/A'
     }));
 
     useEffect(() => {

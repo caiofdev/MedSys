@@ -12,7 +12,7 @@ class DoctorController extends Controller
     {
         $search = $request->get('search', '');
         
-        $doctors = Doctor::with(['user', 'specialty'])->when($search, function ($query) use ($search) {
+        $doctors = Doctor::with(['user'])->when($search, function ($query) use ($search) {
             $query->whereHas('user', function ($userQuery) use ($search) {
                 $userQuery->where('name', 'like', "%{$search}%");
             });
