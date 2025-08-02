@@ -21,7 +21,7 @@ interface User {
     email: string;
     cpf: string;
     phone: string;
-    photo: string | null;
+    photo: string | undefined;
 }
 
 interface Admin {
@@ -55,7 +55,9 @@ export default function AdminTable({ admins, filters }: AdminTableProps) {
         name: admin.user.name,
         email: admin.user.email,
         phone: admin.user.phone,
-        is_master: admin.is_master ? 'Sim' : 'Não'
+        cpf: admin.user.cpf,
+        is_master: admin.is_master ? 'Sim' : 'Não',
+        photo: admin.user.photo,
     }));
 
     useEffect(() => {
@@ -85,12 +87,9 @@ export default function AdminTable({ admins, filters }: AdminTableProps) {
                         value={searchTerm}
                         onChange={setSearchTerm}
                     />
-                    <div className='flex items-center justify-center text-4xl hover:scale-110 hover:text-[#030d29e1] transition duration-200 cursor-pointer '>
-                        <FontAwesomeIcon icon={faCirclePlus}/>
-                    </div>
                 </div>
                 
-                <Table users={tableData} />
+                <Table users={tableData} type={'admin'} />
                 
                 <Pagination 
                     links={admins.links}

@@ -5,8 +5,6 @@ import { Head, router } from '@inertiajs/react';
 import Pagination from '../../components/pagination';
 import SearchBox from '../../components/ui/search-box';
 import { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCirclePlus } from '@fortawesome/free-solid-svg-icons';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -21,7 +19,7 @@ interface User {
     email: string;
     cpf: string;
     phone: string;
-    photo: string | null;
+    photo: string | undefined;
 }
 
 interface Doctor {
@@ -54,6 +52,8 @@ export default function DoctorTable({ doctors, filters }: DoctorTableProps) {
         name: doctor.user.name,
         email: doctor.user.email,
         phone: doctor.user.phone,
+        cpf: doctor.user.cpf,
+        photo: doctor.user.photo,
     }));
 
     useEffect(() => {
@@ -83,12 +83,9 @@ export default function DoctorTable({ doctors, filters }: DoctorTableProps) {
                             value={searchTerm}
                             onChange={setSearchTerm}
                         />
-                    <div className='flex items-center justify-center text-4xl hover:scale-110 hover:text-[#030d29e1] transition duration-200 cursor-pointer '>
-                        <FontAwesomeIcon icon={faCirclePlus}/>
-                    </div>
                 </div>
                 
-                <Table users={tableData} />
+                <Table users={tableData} type='doctor' />
                 
                 <Pagination 
                     links={doctors.links}
