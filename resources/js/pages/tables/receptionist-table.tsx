@@ -21,7 +21,7 @@ interface User {
     email: string;
     cpf: string;
     phone: string;
-    photo: string | null;
+    photo: string | undefined;
 }
 
 interface Receptionist {
@@ -54,7 +54,8 @@ export default function ReceptionistTable({ receptionists, filters }: Receptioni
         name: receptionist.user.name,
         email: receptionist.user.email,
         phone: receptionist.user.phone,
-        cpf: receptionist.user.cpf
+        cpf: receptionist.user.cpf,
+        photo: receptionist.user.photo,
     }));
 
     useEffect(() => {
@@ -84,13 +85,10 @@ export default function ReceptionistTable({ receptionists, filters }: Receptioni
                         value={searchTerm}
                         onChange={setSearchTerm}
                     />
-                    <div className='flex items-center justify-center text-4xl hover:scale-110 hover:text-[#030d29e1] transition duration-200 cursor-pointer '>
-                        <FontAwesomeIcon icon={faCirclePlus}/>
-                    </div>
                 </div>
-                
-                <Table users={tableData} />
-                
+
+                <Table users={tableData} type='receptionist' />
+
                 <Pagination 
                     links={receptionists.links}
                     currentPage={receptionists.current_page}

@@ -1,0 +1,402 @@
+import { useState, useEffect } from "react"
+import { useInitials } from '@/hooks/use-initials';
+import { InputField } from "./input-field";
+import { SelectField } from "./select-field";
+import { faUser, faEnvelope, faIdCard, faPhone, faGear, faLocation, faIdCardClip, faCommentMedical, faCalendar, faLocationArrow, faKey,  } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+
+interface User {
+    id: number
+    name: string
+    email: string
+    cpf: string
+    phone: string
+    photo: string | undefined;
+    is_master?: string
+    medical_history?: string
+    birth_date?: Date
+    emergency_contact?: string
+    gender?: string
+    especiality?: string
+    crm?: string
+    register_number?: string
+}
+
+type UserRole = "admin" | "receptionist" | "doctor" | "patient";
+
+interface ModalProps {
+    user: User | null;
+    type: UserRole;
+}
+
+function ModalView({ user, type }: ModalProps)  {
+    const getInitials = useInitials();
+
+    return (
+        <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl overflow-y-auto">
+        <DialogHeader>
+            <DialogTitle className="text-white text-center p-2">Detalhes de {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
+            <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar">
+            {user ? (
+                <>
+                <div className="flex justify-center">
+                    <Avatar className="h-22 w-22 rounded-full border-2 border-[#9FA3AE]">
+                    <AvatarImage src={user.photo} alt={user.name} />
+                    <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
+                        {getInitials(user.name)}
+                    </AvatarFallback>
+                    </Avatar>
+                </div>
+
+                <InputField label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={user.name} disabled />
+                <div className="flex gap-3">
+                    <InputField label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} value={user.email} disabled />
+                    {type == "patient" && (
+                        <InputField label="Localização" icon={<FontAwesomeIcon icon={faLocationArrow} />} value={"localização"} disabled />
+                    )}
+                </div>
+                <div className="flex gap-3">
+                    <InputField label="CPF" icon={<FontAwesomeIcon icon={faIdCard} />} value={user.cpf} disabled />
+                    <InputField label="Telefone" icon={<FontAwesomeIcon icon={faPhone} />} value={user.phone} disabled />
+                </div>
+
+                { type=="doctor" && (
+                <div className="flex gap-3">
+                    <InputField label="CRM" icon={""} value={user.crm ?? ""} disabled />
+                    <InputField label="Especialidade" icon={""} value={user.especiality ?? ""} disabled />
+                </div>
+                )}
+
+                { type=="admin" && (
+                    <InputField
+                        label="Administrador Master"
+                        icon={<FontAwesomeIcon icon={faGear} />}
+                        value={user.is_master ? "Sim" : "Não"}
+                        disabled
+                    />
+                )}
+
+                { type=="receptionist" && (
+                    <InputField
+                        label="Número de Registro"
+                        icon={<FontAwesomeIcon icon={faIdCardClip} />}
+                        value={user.register_number ?? ""}
+                        disabled
+                    />
+                )}
+
+                { type=="patient" && (
+                    <div className="flex flex-col gap-3">
+                        <div className="flex gap-3">
+                            <InputField label="Gênero" icon={""} value={user.gender ?? ""} disabled />
+                            <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toDateString() ?? ""} disabled />
+                        </div>
+                            <InputField
+                                label="Emergência"
+                                icon={<FontAwesomeIcon icon={faCommentMedical} />}
+                                value={user.emergency_contact ?? ""}
+                                disabled
+                            />
+                        <InputField
+                                label="Histórico Médico"
+                                value={user.medical_history ?? ""}
+                                disabled
+                                isTextArea={true}
+                        />
+                    </div>
+                )}
+
+                </>
+            ) : (
+                <p>Nenhum usuário selecionado.</p>
+            )}
+
+            <div className="w-full flex justify-center bg-white p-3 rounded-b-2xl">
+                <DialogFooter>
+                <DialogClose className="text-white text-base bg-[#030D29] px-5 py-1 rounded hover:scale-105 transition cursor-pointer">
+                    Fechar
+                </DialogClose>
+                </DialogFooter>
+            </div>
+
+            </DialogDescription>
+        </DialogHeader>
+        </DialogContent>
+    );
+}
+
+function ModalEdit({ user, type }: ModalProps) {
+    if (!user) return null;
+
+    const [preview, setPreview] = useState(user.photo || "");
+    const [formData, setFormData] = useState({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        medical_history: user.medical_history,
+        birth_date: user.birth_date,
+        emergency_contact: user.emergency_contact,
+        especiality: user.especiality,
+    });
+
+    const [especiality, setEspeciality] = useState(user.especiality ?? "");
+    const [gender, setGender] = useState(user.gender ?? "");
+
+    useEffect(() => {
+        if (user?.photo) setPreview(user.photo);
+    }, [user]);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) setPreview(URL.createObjectURL(file));
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        if (name === "especiality") setEspeciality(value);
+        if (name === "gender") setGender(value);
+    };
+
+    return (
+        <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl">
+        <DialogHeader>
+            <DialogTitle className="text-white text-center p-2">Editar {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
+            <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar">
+            <div className="flex flex-col items-center gap-2">
+                <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
+                <AvatarImage src={preview} alt={user.name} />
+                </Avatar>
+                <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
+                Editar Foto
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                </label>
+            </div>
+
+            <InputField label="Nome" icon={<FontAwesomeIcon icon={faUser} />} name="name" value={formData.name} onChange={handleChange} />
+            <InputField label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} name="email" value={formData.email} onChange={handleChange} />
+            <InputField label="Telefone" icon={<FontAwesomeIcon icon={faPhone} />} name="phone" value={formData.phone} onChange={handleChange} />
+
+            { type=="doctor" && (
+                <SelectField
+                    label="Especialidade"
+                    name="especiality"
+                    value={especiality}
+                    onChange={handleSelectChange}
+                    options={[
+                    { label: "especialidade", value: "especialidade" },
+                    { label: "Teste1", value: "test1" },
+                    { label: "Teste2", value: "test2" },
+                    ]}
+                />
+            )}
+
+            { type=="patient" && (
+                <div className="flex flex-col gap-3">   
+                    <InputField
+                        label="Contato de Emergência"
+                        icon={<FontAwesomeIcon icon={faPhone} />}
+                        name="emergency_contact"
+                        value={formData.emergency_contact ?? ""}
+                        onChange={handleChange}
+                    />
+                    <SelectField
+                        label="Gênero"
+                        name="gender"
+                        value={gender}
+                        onChange={handleSelectChange}
+                        options={[
+                        { label: "Feminino", value: "fem" },
+                        { label: "Masculino", value: "masc" },
+                        { label: "Outro", value: "other" },
+                        ]}
+                    />
+                    <InputField
+                        label="Histórico Médico"
+                        name="medical_history"
+                        value={formData.medical_history ?? ""}
+                        onChange={handleChange}
+                        isTextArea
+                    />
+            </div>
+            )}
+
+            <div className="w-full flex justify-center pt-4 gap-3">
+                <button className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 transition">Salvar</button>
+                <DialogClose className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 transition">Fechar</DialogClose>
+            </div>
+            </DialogDescription>
+        </DialogHeader>
+        </DialogContent>
+    );
+}
+
+function ModalCreate ({user, type}: ModalProps){
+    const [preview, setPreview] = useState("");
+    const [especiality, setEspeciality] = useState("Selecione a especialidade");
+    const [gender, setGender] = useState("Selecione o gênero");
+    const [is_master, setIsMaster] = useState("Selecione a opção");
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        cpf: "",
+        phone: "",
+        photo: "",
+        is_master: "",
+        medical_history: "",
+        birth_date: "",
+        emergency_contact: "",
+        gender: "",
+        especiality: "",
+        crm: "",
+        register_number: "",
+        password: "",
+    });
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) setPreview(URL.createObjectURL(file));
+    };
+
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        if (name === "especiality") setEspeciality(value);
+        if (name === "gender") setGender(value);
+        if (name === "is_master") setIsMaster(value);
+    };
+
+    return (
+        <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl ">
+            <DialogHeader className="flex-shrink-0">
+                <DialogTitle className="text-white text-center p-2">Criar {type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
+                <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar" >
+                    <div className="flex flex-col items-center gap-2">
+                        <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
+                            <AvatarImage src={preview} alt="Preview" />
+                            <AvatarFallback>
+                                <img src="default-user.png" />
+                            </AvatarFallback>
+                        </Avatar>       
+                        <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
+                            Adicionar Foto
+                            <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                        </label>
+                    </div>
+                    <InputField name="name" label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={formData.name} placeholder="Digite o nome" onChange={handleChange} />
+                    <InputField name="email" label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} value={formData.email} placeholder="Digite o e-mail" onChange={handleChange} />
+                    <InputField name="password" label="Senha" type="password" icon={<FontAwesomeIcon icon={faKey} />} value={formData.password} placeholder="Digite a senha" onChange={handleChange} />
+                    <div className="flex gap-3">
+                        <InputField name="phone" label="Telefone" icon={<FontAwesomeIcon icon={faPhone} />} value={formData.phone} 
+                        placeholder="Digite o telefone" onChange={handleChange} />
+                        <InputField name="cpf" label="CPF" icon={<FontAwesomeIcon icon={faIdCard} />} value={formData.cpf} placeholder="Digite o CPF" onChange={handleChange} />
+                    </div>
+
+                    {type === "patient" && (
+                        <div className="flex flex-col gap-3">
+                            <div className="flex gap-3">
+                                <SelectField
+                                    name="gender"
+                                    label="Gênero"
+                                    options={[
+                                        { label: "Feminino", value: "fem" },
+                                        { label: "Masculino", value: "masc" },
+                                        { label: "Outro", value: "other" },
+                                    ]}
+                                    onChange={handleSelectChange}
+                                    value={gender}
+                                />
+                                <InputField name="birth_date" label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={formData.birth_date} type="date" onChange={handleChange} />
+                            </div>
+                            <InputField name="emergency_contact" label="Contato de Emergência" icon={<FontAwesomeIcon icon={faCommentMedical} />} value={formData.emergency_contact} placeholder="Digite o contato de emergência" onChange={handleChange} />
+                            <InputField name="medical_history" label="Histórico Médico" value={formData.medical_history} isTextArea={true} placeholder="Digite o histórico médico" onChange={handleChange} />
+                        </div>
+                    )}
+
+                    {type === "doctor" && (
+                        <div className="flex gap-3">
+                            <InputField name="crm" label="CRM" icon={<FontAwesomeIcon icon={faIdCardClip} />} value={formData.crm} placeholder="Digite o CRM" onChange={handleChange} />
+                            <SelectField
+                                name="especiality"
+                                label="Especialidade"
+                                options={[
+                                    { label: "Cardiologia", value: "cardiology" },
+                                    { label: "Pediatria", value: "pediatrics" },
+                                    { label: "Ortopedia", value: "orthopedics" },
+                                ]}
+                                onChange={handleSelectChange}
+                                value={especiality}
+                            />
+                        </div>
+                    )}
+
+                    {type === "receptionist" && (
+                        <InputField name="register_number" label="Número de Registro" icon={<FontAwesomeIcon icon={faIdCardClip} />} value={formData.register_number} placeholder="Digite o número de registro" onChange={handleChange} />
+                    )}
+
+                    {type === "admin" && (
+                        <SelectField
+                            name="is_master"
+                            label="Administrador Master"
+                            options={[
+                                { label: "Sim", value: "yes" },
+                                { label: "Não", value: "no" },
+                            ]}
+                            onChange={handleSelectChange}
+                            value={is_master}
+                        />
+                    )}
+
+                    <div className="w-full flex justify-center pt-4 gap-3">
+                        <button className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer">Criar</button>
+                        <DialogClose className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 transition cursor-pointer">Fechar</DialogClose>
+                    </div>
+                </DialogDescription>
+            </DialogHeader>
+        </DialogContent>
+    );
+}
+
+function ModalDelete({ user, type }: ModalProps) {
+    if (!user) return null;
+
+    return (
+        <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl overflow-y-auto">
+        <DialogHeader>
+            <DialogTitle className="text-white text-center p-2">Excluir {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
+            <DialogDescription className=" flex flex-col items-center text-base bg-white text-[#030D29] rounded-b-2xl space-y-4 p-7">
+                Tem certeza que deseja excluir o usuário {user.name}?
+                <div className="w-full flex justify-center bg-white p-3 rounded-b-2xl">
+                    <DialogFooter>
+                    <DialogClose className="text-white text-base bg-[#030D29] px-5 py-1 rounded hover:scale-105 transition cursor-pointer">
+                        Excluir
+                    </DialogClose>
+                    <DialogClose className="text-white text-base bg-[#030D29] px-5 py-1 rounded hover:scale-105 transition cursor-pointer">
+                        Fechar
+                    </DialogClose>
+                    </DialogFooter>
+                </div>
+            </DialogDescription>
+        </DialogHeader>
+
+        </DialogContent>
+    );
+}
+
+export{
+    ModalView,
+    ModalEdit,
+    ModalCreate,
+    ModalDelete
+}

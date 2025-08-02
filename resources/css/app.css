@@ -112,6 +112,25 @@
     --sidebar-ring: #030d293a;
 }
 
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+    margin: 10px 0px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #030d29e8;
+    border-radius: 20px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #1a2332;
+}
+
 /* .dark {
     --background: #01050f;
     --foreground: #DFDEDE;
