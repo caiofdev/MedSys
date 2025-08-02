@@ -47,7 +47,7 @@ export default function ReceptionistDashboard({ user, daily_summary, weekly_appo
                                 icon={faUsers} 
                                 title={"Pacientes"} 
                                 color="F46248"
-                                route="/patient-table"
+                                route="/receptionist/patients"
                             />
                             <DashboardCard 
                                 icon={faCalendar} 

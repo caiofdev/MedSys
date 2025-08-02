@@ -1,7 +1,10 @@
 import { type BreadcrumbItem } from '@/types';
 import Table from '../../components/table-template';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import Pagination from '../../components/pagination';
+import SearchBox from '../../components/ui/search-box';
+import { useState, useEffect } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -16,26 +19,79 @@ interface Patient {
     email: string;
     cpf: string;
     phone: string;
-    photo: string | undefined;
+    gender: string;
+    birth_date: string;
+    emergency_contact: string;
+    medical_history?: string;
 }
 
-interface PatientProps {
-    patients: Patient[];
+interface PaginatedPatients {
+    data: Patient[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: any[];
 }
 
-const patientDataTest: PatientProps = {
-    patients: [
-        { id: 1, name: 'Luiza Carvalho', email: 'luiza@email.com', cpf: '123.456.789-00', phone: '(11) 98765-4321', photo: undefined },
-        { id: 2, name: 'Carlos Mendes', email: 'carlos@email.com', cpf: '987.654.321-00', phone: '(11) 91234-5678', photo: undefined },
-        { id: 3, name: 'Ana Souza', email: 'ana@email.com', cpf: '456.789.123-00', phone: '(11) 99876-5432', photo: undefined },
-    ],
-};
+interface PatientTableProps {
+    patients: PaginatedPatients;
+    filters: {
+        search: string;
+    };
+}
 
-export default function PatientTable(){
+export default function PatientTable({ patients, filters }: PatientTableProps) {
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+
+    const tableData = patients.data.map(patient => ({
+        id: patient.id,
+        name: patient.name,
+        email: patient.email,
+        phone: patient.phone,
+        cpf: patient.cpf,
+        photo: undefined
+    }));
+
+    useEffect(() => {
+        setSearchTerm(filters?.search || '');
+    }, [filters?.search]);
+
+    useEffect(() => {
+        if (searchTerm !== (filters?.search || '')) {
+            const delayedSearch = setTimeout(() => {
+                router.get('/patient-table', { search: searchTerm }, { 
+                    preserveState: true,
+                    preserveScroll: true 
+                });
+            }, 500);
+
+            return () => clearTimeout(delayedSearch);
+        }
+    }, [searchTerm]);
+
     return(
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Patient Table" />
-            <Table users={patientDataTest.patients} type='patient'/>
+            <div className="flex flex-col space-y-6 justify-center mt-5">
+                <div className='flex flex-row justify-between ml-30 mr-30'>
+                    <SearchBox 
+                        placeHolder="Buscar por nome do administrador..." 
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                    />
+                </div>
+                
+                <Table users={tableData} type='patient'/>
+                
+                <Pagination 
+                    links={patients.links}
+                    currentPage={patients.current_page}
+                    lastPage={patients.last_page}
+                    total={patients.total}
+                    perPage={patients.per_page}
+                />
+            </div>
         </AppLayout>
     );
 }
