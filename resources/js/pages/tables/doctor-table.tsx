@@ -76,13 +76,13 @@ export default function DoctorTable({ doctors, filters }: DoctorTableProps) {
     return(
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Doctor Table" />
-                <div className="flex flex-col space-y-6 justify-center mt-5">
-                    <div className='flex flex-row justify-between ml-30 mr-30'>
-                        <SearchBox 
-                            placeHolder="Buscar por nome do doutor..." 
-                            value={searchTerm}
-                            onChange={setSearchTerm}
-                        />
+            <div className="flex flex-col space-y-6 justify-center mt-5">
+                <div className='flex flex-row justify-between ml-30 mr-30'>
+                    <SearchBox 
+                        placeHolder="Buscar por nome do doutor..." 
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                    />
                 </div>
                 
                 <Table users={tableData} type='doctor' />
