@@ -27,11 +27,6 @@ class AdminController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        
-    }
-
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -103,11 +98,6 @@ class AdminController extends Controller
             'photo' => $admin->user->photo ? asset('storage/' . $admin->user->photo) : null,
             'is_master' => $admin->is_master,
         ]);
-    }
-
-    public function edit(Admin $admin)
-    {
-        
     }
 
     public function update(Request $request, Admin $admin)
