@@ -34,7 +34,7 @@ interface AdminDashboardProps {
 
 export default function AdminDashboard({ user, stats, recent_activities }: AdminDashboardProps) {
     return (
-    <AppLayout breadcrumbs={breadcrumbs}>
+    <AppLayout breadcrumbs={breadcrumbs} userRole="admin">
         <Head title="Admin Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-6 pr-10 pl-10 overflow-x-auto">
                 <div className="flex flex-col gap-4 h-full">
