@@ -325,7 +325,11 @@ function ModalView({ user, type }: ModalProps)  {
                 <>
                 <div className="flex justify-center">
                     <Avatar className="h-22 w-22 rounded-full border-2 border-[#9FA3AE]">
-                    <AvatarImage src={user.photo} alt={user.name} />
+                    <AvatarImage 
+                        src={user.photo} 
+                        alt={user.name} 
+                        className="object-cover w-full h-full rounded-full"
+                    />
                     <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
                         {getInitials(user.name)}
                     </AvatarFallback>
@@ -497,7 +501,11 @@ function ModalEdit({ user, type }: ModalProps) {
             <DialogDescription className="flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar" style={{ display: renderDescription }}>
             <div className="flex flex-col items-center gap-2">
                 <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
-                    <AvatarImage src={preview} alt={user.name} />
+                    <AvatarImage 
+                        src={preview} 
+                        alt={user.name} 
+                        className="object-cover w-full h-full rounded-full"
+                    />
                 </Avatar>
                 <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
                     Editar Foto
@@ -683,7 +691,11 @@ function ModalCreate ({user, type}: ModalProps){
                 <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar flex-col" style={{ display: renderDescription }}>
                     <div className="flex flex-col items-center gap-2">
                         <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
-                            <AvatarImage src={preview} alt="Preview" />
+                            <AvatarImage 
+                                src={preview} 
+                                alt="Preview" 
+                                className="object-cover w-full h-full rounded-full"
+                            />
                             <AvatarFallback>
                                 <img src="default-user.png" />
                             </AvatarFallback>

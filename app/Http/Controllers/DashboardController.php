@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $dashboardData = [
             'user' => [
                 'name' => $user->name,
-                'avatar' => $user->photo ?? '/admin-pic.png',
+                'avatar' => $user->photo ? asset('storage/' . $user->photo) : '/admin-pic.png',
                 'role' => 'ADMINISTRADOR',
                 'is_master' => $user->admin->is_master ?? false,
             ],
@@ -57,7 +57,7 @@ class DashboardController extends Controller
         $dashboardData = [
             'user' => [
                 'name' => $user->name,
-                'avatar' => $user->photo ?? '/doctor-pic.png',
+                'avatar' => $user->photo ? asset('storage/' . $user->photo) : '/doctor-pic.png',
                 'role' => 'DOUTOR',
                 'crm' => $doctor->crm ?? null,
                 'specialty' => $doctor->specialty->name ?? 'Não definido',
@@ -85,7 +85,7 @@ class DashboardController extends Controller
         $dashboardData = [
             'user' => [
                 'name' => $user->name,
-                'avatar' => $user->photo ?? '/recepcionist-pic.png',
+                'avatar' => $user->photo ? asset('storage/' . $user->photo) : '/recepcionist-pic.png',
                 'role' => 'RECEPCIONISTA',
                 'registration_number' => $receptionist->registration_number ?? null,
             ],
