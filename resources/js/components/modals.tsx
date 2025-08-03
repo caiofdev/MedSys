@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react"
+import { useState, useEffect, createContext, useContext, ReactNode, useRef } from "react"
 import { useInitials } from '@/hooks/use-initials';
 import { InputField } from "./input-field";
 import { SelectField } from "./select-field";
@@ -414,6 +414,9 @@ function ModalView({ user, type }: ModalProps)  {
 function ModalEdit({ user, type }: ModalProps) {
     if (!user) return null;
 
+    const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const {
         preview,
         especiality,
@@ -433,6 +436,45 @@ function ModalEdit({ user, type }: ModalProps) {
         initializeEditMode(user);
     }, [user]);
 
+    const handleSave = async () => {
+        if (!user || isSaving) return;
+
+        setIsSaving(true);
+
+        try {
+            const submitFormData = new FormData();
+            submitFormData.append('name', formData.name);
+            submitFormData.append('email', formData.email);
+            submitFormData.append('phone', formData.phone);
+            submitFormData.append('_method', 'PUT');
+
+            if (fileInputRef.current?.files?.[0]) {
+                submitFormData.append('photo', fileInputRef.current.files[0]);
+            }
+
+            const response = await fetch(`/admin/admins/${user.id}`, {
+                method: 'POST', 
+                headers: {
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+                body: submitFormData,
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao atualizar administrador');
+            }
+        } catch (error) {
+            console.error('Erro ao salvar:', error);
+            alert('Erro ao salvar as alterações');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl">
         <DialogHeader>
@@ -451,7 +493,13 @@ function ModalEdit({ user, type }: ModalProps) {
                 </Avatar>
                 <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
                     Editar Foto
-                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                    <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageChange} 
+                        className="hidden" 
+                    />
                 </label>
             </div>
 
@@ -504,7 +552,17 @@ function ModalEdit({ user, type }: ModalProps) {
             )}
 
             <div className="w-full flex justify-center pt-4 gap-3">
-                <button className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 hover:bg-[#1C4F4A] transition cursor-pointer">Salvar</button>
+                <button 
+                    onClick={type === "admin" ? handleSave : undefined}
+                    disabled={type === "admin" ? isSaving : false}
+                    className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
+                        type === "admin" && isSaving 
+                            ? 'bg-gray-400 cursor-not-allowed' 
+                            : 'bg-[#030D29] hover:bg-[#1C4F4A]'
+                    }`}
+                >
+                    {type === "admin" && isSaving ? 'Salvando...' : 'Salvar'}
+                </button>
                 {type === "patient" && (
                     <div className="flex justify-center">
                         <button 

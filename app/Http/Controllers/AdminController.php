@@ -46,7 +46,7 @@ class AdminController extends Controller
             'email' => $admin->user->email,
             'cpf' => $admin->user->cpf,
             'phone' => $admin->user->phone,
-            'photo' => $admin->user->photo,
+            'photo' => $admin->user->photo ? asset('storage/' . $admin->user->photo) : null,
             'is_master' => $admin->is_master,
         ]);
     }
@@ -58,7 +58,43 @@ class AdminController extends Controller
 
     public function update(Request $request, Admin $admin)
     {
-        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $admin->user->id,
+            'phone' => 'required|string|max:20',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+        ];
+
+        if ($request->hasFile('photo')) {
+            if ($admin->user->photo && file_exists(public_path('storage/' . $admin->user->photo))) {
+                unlink(public_path('storage/' . $admin->user->photo));
+            }
+
+            $file = $request->file('photo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('storage/photos'), $filename);
+            $updateData['photo'] = 'photos/' . $filename;
+        }
+
+        $admin->user->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Administrador atualizado com sucesso.',
+            'admin' => [
+                'id' => $admin->id,
+                'name' => $admin->user->name,
+                'email' => $admin->user->email,
+                'phone' => $admin->user->phone,
+                'photo' => $admin->user->photo ? asset('storage/' . $admin->user->photo) : null,
+            ]
+        ]);
     }
 
     public function destroy(Admin $admin)
