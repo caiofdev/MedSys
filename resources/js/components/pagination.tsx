@@ -24,7 +24,6 @@ export default function Pagination({ links, currentPage, lastPage, total, perPag
     return (
         <div className="flex items-center justify-center px-4 py-6 sm:px-6">
             <div className="flex flex-1 justify-between sm:hidden">
-                {/* Mobile view */}
                 {links[0]?.url && (
                     <Link
                         href={links[0].url}
@@ -61,7 +60,6 @@ export default function Pagination({ links, currentPage, lastPage, total, perPag
                             </span>
                         )}
 
-                        {/* Page numbers */}
                         {links.slice(1, -1).map((link, index) => {
                             if (!link.url && link.label === '...') {
                                 return (
@@ -78,10 +76,10 @@ export default function Pagination({ links, currentPage, lastPage, total, perPag
                                 <Link
                                     key={index}
                                     href={link.url}
-                                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors ${
+                                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0 transition-colors ${
                                         link.active 
-                                            ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                                            : 'bg-white text-gray-900'
+                                            ? 'z-10 bg-[#030D29] text-white hover:bg-[#030D29]'
+                                            : 'bg-white text-gray-900 hover:bg-[#bdbdbd33]'
                                     }`}
                                     aria-current={link.active ? 'page' : undefined}
                                 >

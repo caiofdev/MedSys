@@ -32,7 +32,7 @@ interface DoctorDashboardProps {
 
 export default function DoctorDashboard({ user, appointments, upcoming_appointments }: DoctorDashboardProps) {
     return (
-    <AppLayout breadcrumbs={breadcrumbs}>
+    <AppLayout breadcrumbs={breadcrumbs} userRole="doctor">
         <Head title="Doctor Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-6 pr-10 pl-10 overflow-x-auto">
                 <div className="flex flex-col gap-4 h-full">
@@ -41,7 +41,7 @@ export default function DoctorDashboard({ user, appointments, upcoming_appointme
                         <DashboardProfile userName={user.name} imgPath={user.avatar} type={user.role} />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-2 grid grid-cols-3 gap-4 h-full">
+                        <div className="col-span-2 grid grid-cols-3 gap-4 h-50">
                             <DashboardCard 
                                 icon={faCirclePlay} 
                                 title="Iniciar Atendimento"

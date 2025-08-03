@@ -34,7 +34,7 @@ interface ReceptionistDashboardProps {
 
 export default function ReceptionistDashboard({ user, daily_summary, weekly_appointments }: ReceptionistDashboardProps) {
     return (
-    <AppLayout breadcrumbs={breadcrumbs}>
+    <AppLayout breadcrumbs={breadcrumbs} userRole="receptionist">
         <Head title="Recepcionist Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-6 pr-10 pl-10 overflow-x-auto">
                 <div className="flex flex-col gap-4 h-full">

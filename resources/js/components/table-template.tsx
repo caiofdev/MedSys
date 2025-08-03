@@ -1,17 +1,8 @@
 import { useState } from "react"
 import { faEye, faPencil, faTrashCan, faCirclePlus} from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { useInitials } from '@/hooks/use-initials';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-    DialogClose,
-} from "@/components/ui/dialog"
-import {ModalView, ModalEdit, ModalCreate, ModalDelete} from "./modals"
+import {Dialog} from "@/components/ui/dialog"
+import {ModalView, ModalEdit, ModalCreate, ModalDelete, ModalProvider} from "./modals"
 
 
 interface User {
@@ -99,13 +90,14 @@ export default function Table({ users, type}: TableProps) {
             ))}
             </tbody>
         </table>
-
-        <Dialog open={open} onOpenChange={setOpen} >
-            {operation === "view" && <ModalView user={selectedUser} type={type} />}
-            {operation === "edit" && <ModalEdit user={selectedUser} type={type} />}
-            {operation === "create" && <ModalCreate user={selectedUser} type={type} />}
-            {operation === "delete" && <ModalDelete user={selectedUser} type={type} />}
-        </Dialog>
+        <ModalProvider>
+            <Dialog open={open} onOpenChange={setOpen} >
+                {operation === "view" && <ModalView user={selectedUser} type={type} />}
+                {operation === "edit" && <ModalEdit user={selectedUser} type={type} />}
+                {operation === "create" && <ModalCreate user={selectedUser} type={type} />}
+                {operation === "delete" && <ModalDelete user={selectedUser} type={type} />}
+            </Dialog>
+        </ModalProvider>
         </div>
     )
 }

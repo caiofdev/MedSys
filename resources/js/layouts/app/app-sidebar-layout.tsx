@@ -5,10 +5,17 @@ import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { type BreadcrumbItem } from '@/types';
 import { type PropsWithChildren } from 'react';
 
-export default function AppSidebarLayout({ children, breadcrumbs = [] }: PropsWithChildren<{ breadcrumbs?: BreadcrumbItem[] }>) {
+type UserRole = 'admin' | 'doctor' | 'receptionist' | 'patient';
+
+interface AppSidebarLayoutProps {
+    breadcrumbs?: BreadcrumbItem[];
+    userRole?: UserRole;
+}
+
+export default function AppSidebarLayout({ children, breadcrumbs = [], userRole = 'admin' }: PropsWithChildren<AppSidebarLayoutProps>) {
     return (
         <AppShell variant="sidebar">
-            <AppSidebar />
+            <AppSidebar userRole={userRole} />
             <AppContent variant="sidebar" className="overflow-x-hidden">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
