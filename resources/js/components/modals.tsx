@@ -2,11 +2,10 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { useInitials } from '@/hooks/use-initials';
 import { InputField } from "./input-field";
 import { SelectField } from "./select-field";
-import { faUser, faEnvelope, faIdCard, faPhone, faGear, faLocation, faIdCardClip, faCommentMedical, faCalendar, faKey} from "@fortawesome/free-solid-svg-icons";
+import { faUser, faEnvelope, faIdCard, faPhone, faGear, faIdCardClip, faCommentMedical, faCalendar, faKey} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
 
 interface User {
     id: number
@@ -15,7 +14,7 @@ interface User {
     cpf: string
     phone: string
     photo: string | undefined;
-    is_master?: string
+    is_master?: string | boolean
     medical_history?: string
     birth_date?: Date
     emergency_contact?: string
@@ -216,7 +215,9 @@ function ModalProvider({ children }: { children: ReactNode }) {
             cpf: user.cpf,
             phone: user.phone,
             photo: user.photo || "",
-            is_master: user.is_master || "",
+            is_master: typeof user.is_master === 'boolean' 
+                ? (user.is_master ? "yes" : "no")
+                : (user.is_master || ""),
             medical_history: user.medical_history || "",
             birth_date: user.birth_date?.toString() || "",
             emergency_contact: user.emergency_contact || "",
@@ -240,7 +241,11 @@ function ModalProvider({ children }: { children: ReactNode }) {
         setPreview(user.photo || "");
         setEspeciality(user.especiality || "Selecione a especialidade");
         setGender(user.gender || "Selecione o gênero");
-        setIsMaster(user.is_master || "Selecione a opção");
+        setIsMaster(
+            typeof user.is_master === 'boolean' 
+                ? (user.is_master ? "yes" : "no")
+                : (user.is_master || "Selecione a opção")
+        );
     };
     
     const value = {
@@ -335,7 +340,14 @@ function ModalView({ user, type }: ModalProps)  {
                     <InputField
                         label="Administrador Master"
                         icon={<FontAwesomeIcon icon={faGear} />}
-                        value={user.is_master ? "Sim" : "Não"}
+                        value={
+                            (typeof user.is_master === 'boolean' && user.is_master) || 
+                            user.is_master === 'Sim' || 
+                            user.is_master === 'yes' || 
+                            user.is_master === '1'
+                                ? "Sim" 
+                                : "Não"
+                        }
                         disabled
                     />
                 )}

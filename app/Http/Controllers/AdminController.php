@@ -38,7 +38,17 @@ class AdminController extends Controller
 
     public function show(Admin $admin)
     {
+        $admin->load('user');
         
+        return response()->json([
+            'id' => $admin->id,
+            'name' => $admin->user->name,
+            'email' => $admin->user->email,
+            'cpf' => $admin->user->cpf,
+            'phone' => $admin->user->phone,
+            'photo' => $admin->user->photo,
+            'is_master' => $admin->is_master,
+        ]);
     }
 
     public function edit(Admin $admin)

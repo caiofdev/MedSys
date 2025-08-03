@@ -56,6 +56,7 @@ export default function AdminTable({ admins, filters }: AdminTableProps) {
         cpf: admin.user.cpf,
         is_master: admin.is_master ? 'Sim' : 'Não',
         photo: admin.user.photo,
+        is_master_bool: admin.is_master
     }));
 
     useEffect(() => {
