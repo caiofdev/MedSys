@@ -19,7 +19,11 @@ export default function DashboardProfile( { userName, imgPath, type}: DashboardP
                 <div className='flex flex-row justify-start items-center h-full'>
                     <div className='flex p-5 w-fit'>
                         <Avatar className="h-22 w-22 rounded-full border-2 border-[#9FA3AE]">
-                            <AvatarImage src={imgPath} alt={userName} />
+                            <AvatarImage 
+                                src={imgPath} 
+                                alt={userName} 
+                                className="object-cover w-full h-full rounded-full"
+                            />
                             <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
                                 {getInitials(userName)}
                             </AvatarFallback>

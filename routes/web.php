@@ -17,8 +17,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('admin/dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard')->middleware('user.type:admin');
     Route::get('admin/admins', [AdminController::class, 'index'])->name('admin.table')->middleware('user.type:admin');
+    Route::post('admin/admins', [AdminController::class, 'store'])->name('admin.store')->middleware('user.type:admin');
     Route::get('admin/doctors', [DoctorController::class, 'index'])->name('doctor.table')->middleware('user.type:admin');
     Route::get('admin/receptionists', [ReceptionistController::class, 'index'])->name('receptionist.table')->middleware('user.type:admin');
+
+    Route::get('admin/admins/{admin}', [AdminController::class, 'show'])->name('admin.show')->middleware('user.type:admin');
+    Route::put('admin/admins/{admin}', [AdminController::class, 'update'])->name('admin.update')->middleware('user.type:admin');
+    Route::post('admin/admins/{admin}', [AdminController::class, 'update'])->name('admin.update.post')->middleware('user.type:admin');
+    Route::delete('admin/admins/{admin}', [AdminController::class, 'destroy'])->name('admin.destroy')->middleware('user.type:admin');
 
     Route::get('doctor/dashboard', [DashboardController::class, 'doctorDashboard'])->name('doctor.dashboard')->middleware('user.type:doctor');
 

@@ -55,7 +55,8 @@ export default function AdminTable({ admins, filters }: AdminTableProps) {
         phone: admin.user.phone,
         cpf: admin.user.cpf,
         is_master: admin.is_master ? 'Sim' : 'Não',
-        photo: admin.user.photo,
+        photo: admin.user.photo ? `/storage/${admin.user.photo}` : undefined,
+        is_master_bool: admin.is_master
     }));
 
     useEffect(() => {

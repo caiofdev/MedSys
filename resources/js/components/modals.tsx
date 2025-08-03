@@ -1,12 +1,11 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react"
+import { useState, useEffect, createContext, useContext, ReactNode, useRef } from "react"
 import { useInitials } from '@/hooks/use-initials';
 import { InputField } from "./input-field";
 import { SelectField } from "./select-field";
-import { faUser, faEnvelope, faIdCard, faPhone, faGear, faLocation, faIdCardClip, faCommentMedical, faCalendar, faKey} from "@fortawesome/free-solid-svg-icons";
+import { faUser, faEnvelope, faIdCard, faPhone, faGear, faIdCardClip, faCommentMedical, faCalendar, faKey} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
 
 interface User {
     id: number
@@ -15,7 +14,7 @@ interface User {
     cpf: string
     phone: string
     photo: string | undefined;
-    is_master?: string
+    is_master?: string | boolean
     medical_history?: string
     birth_date?: Date
     emergency_contact?: string
@@ -169,9 +168,18 @@ function ModalProvider({ children }: { children: ReactNode }) {
     
     const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { name, value } = e.target;
-        if (name === "especiality") setEspeciality(value);
-        if (name === "gender") setGender(value);
-        if (name === "is_master") setIsMaster(value);
+        if (name === "especiality") {
+            setEspeciality(value);
+            setFormData((prev) => ({ ...prev, especiality: value }));
+        }
+        if (name === "gender") {
+            setGender(value);
+            setFormData((prev) => ({ ...prev, gender: value }));
+        }
+        if (name === "is_master") {
+            setIsMaster(value);
+            setFormData((prev) => ({ ...prev, is_master: value }));
+        }
     };
     
     const resetFormData = () => {
@@ -216,7 +224,9 @@ function ModalProvider({ children }: { children: ReactNode }) {
             cpf: user.cpf,
             phone: user.phone,
             photo: user.photo || "",
-            is_master: user.is_master || "",
+            is_master: typeof user.is_master === 'boolean' 
+                ? (user.is_master ? "yes" : "no")
+                : (user.is_master || ""),
             medical_history: user.medical_history || "",
             birth_date: user.birth_date?.toString() || "",
             emergency_contact: user.emergency_contact || "",
@@ -240,7 +250,11 @@ function ModalProvider({ children }: { children: ReactNode }) {
         setPreview(user.photo || "");
         setEspeciality(user.especiality || "Selecione a especialidade");
         setGender(user.gender || "Selecione o gênero");
-        setIsMaster(user.is_master || "Selecione a opção");
+        setIsMaster(
+            typeof user.is_master === 'boolean' 
+                ? (user.is_master ? "yes" : "no")
+                : (user.is_master || "Selecione a opção")
+        );
     };
     
     const value = {
@@ -311,7 +325,11 @@ function ModalView({ user, type }: ModalProps)  {
                 <>
                 <div className="flex justify-center">
                     <Avatar className="h-22 w-22 rounded-full border-2 border-[#9FA3AE]">
-                    <AvatarImage src={user.photo} alt={user.name} />
+                    <AvatarImage 
+                        src={user.photo} 
+                        alt={user.name} 
+                        className="object-cover w-full h-full rounded-full"
+                    />
                     <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
                         {getInitials(user.name)}
                     </AvatarFallback>
@@ -335,7 +353,14 @@ function ModalView({ user, type }: ModalProps)  {
                     <InputField
                         label="Administrador Master"
                         icon={<FontAwesomeIcon icon={faGear} />}
-                        value={user.is_master ? "Sim" : "Não"}
+                        value={
+                            (typeof user.is_master === 'boolean' && user.is_master) || 
+                            user.is_master === 'Sim' || 
+                            user.is_master === 'yes' || 
+                            user.is_master === '1'
+                                ? "Sim" 
+                                : "Não"
+                        }
                         disabled
                     />
                 )}
@@ -348,12 +373,11 @@ function ModalView({ user, type }: ModalProps)  {
                         disabled
                     />
                 )}
-
+                <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toDateString() ?? ""} disabled />
                 { type=="patient" && (
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-3">
                             <InputField label="Gênero" icon={""} value={user.gender ?? ""} disabled />
-                            <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toDateString() ?? ""} disabled />
                         </div>
                             <InputField
                                 label="Contato de Emergência"
@@ -402,6 +426,9 @@ function ModalView({ user, type }: ModalProps)  {
 function ModalEdit({ user, type }: ModalProps) {
     if (!user) return null;
 
+    const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const {
         preview,
         especiality,
@@ -421,6 +448,45 @@ function ModalEdit({ user, type }: ModalProps) {
         initializeEditMode(user);
     }, [user]);
 
+    const handleSave = async () => {
+        if (!user || isSaving) return;
+
+        setIsSaving(true);
+
+        try {
+            const submitFormData = new FormData();
+            submitFormData.append('name', formData.name);
+            submitFormData.append('email', formData.email);
+            submitFormData.append('phone', formData.phone);
+            submitFormData.append('_method', 'PUT');
+
+            if (fileInputRef.current?.files?.[0]) {
+                submitFormData.append('photo', fileInputRef.current.files[0]);
+            }
+
+            const response = await fetch(`/admin/admins/${user.id}`, {
+                method: 'POST', 
+                headers: {
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+                body: submitFormData,
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao atualizar administrador');
+            }
+        } catch (error) {
+            console.error('Erro ao salvar:', error);
+            alert('Erro ao salvar as alterações');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl">
         <DialogHeader>
@@ -435,11 +501,21 @@ function ModalEdit({ user, type }: ModalProps) {
             <DialogDescription className="flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar" style={{ display: renderDescription }}>
             <div className="flex flex-col items-center gap-2">
                 <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
-                    <AvatarImage src={preview} alt={user.name} />
+                    <AvatarImage 
+                        src={preview} 
+                        alt={user.name} 
+                        className="object-cover w-full h-full rounded-full"
+                    />
                 </Avatar>
                 <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
                     Editar Foto
-                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                    <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageChange} 
+                        className="hidden" 
+                    />
                 </label>
             </div>
 
@@ -492,7 +568,17 @@ function ModalEdit({ user, type }: ModalProps) {
             )}
 
             <div className="w-full flex justify-center pt-4 gap-3">
-                <button className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 hover:bg-[#1C4F4A] transition cursor-pointer">Salvar</button>
+                <button 
+                    onClick={type === "admin" ? handleSave : undefined}
+                    disabled={type === "admin" ? isSaving : false}
+                    className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
+                        type === "admin" && isSaving 
+                            ? 'bg-gray-400 cursor-not-allowed' 
+                            : 'bg-[#030D29] hover:bg-[#1C4F4A]'
+                    }`}
+                >
+                    {type === "admin" && isSaving ? 'Salvando...' : 'Salvar'}
+                </button>
                 {type === "patient" && (
                     <div className="flex justify-center">
                         <button 
@@ -513,6 +599,9 @@ function ModalEdit({ user, type }: ModalProps) {
 }
 
 function ModalCreate ({user, type}: ModalProps){
+    const [isCreating, setIsCreating] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const {
         preview,
         especiality,
@@ -535,6 +624,61 @@ function ModalCreate ({user, type}: ModalProps){
         resetAddressData();
     }, []);
 
+    const handleCreate = async () => {
+        if (isCreating) return;
+
+        if (!formData.name || !formData.email || !formData.password || !formData.cpf || !formData.phone || !formData.birth_date) {
+            alert('Por favor, preencha todos os campos obrigatórios.');
+            return;
+        }
+
+        if (type === "admin" && !formData.is_master) {
+            alert('Por favor, selecione se é administrador master.');
+            return;
+        }
+
+        setIsCreating(true);
+
+        try {
+            const submitFormData = new FormData();
+            submitFormData.append('name', formData.name);
+            submitFormData.append('email', formData.email);
+            submitFormData.append('cpf', formData.cpf);
+            submitFormData.append('phone', formData.phone);
+            submitFormData.append('password', formData.password);
+            submitFormData.append('birth_date', formData.birth_date);
+
+            if (type === "admin") {
+                submitFormData.append('is_master', formData.is_master);
+            }
+
+            if (fileInputRef.current?.files?.[0]) {
+                submitFormData.append('photo', fileInputRef.current.files[0]);
+            }
+
+            const response = await fetch('/admin/admins', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+                body: submitFormData,
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao criar administrador');
+            }
+        } catch (error) {
+            console.error('Erro ao criar:', error);
+            alert('Erro ao criar administrador');
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl ">
             <DialogHeader className="flex-shrink-0">
@@ -547,14 +691,24 @@ function ModalCreate ({user, type}: ModalProps){
                 <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar flex-col" style={{ display: renderDescription }}>
                     <div className="flex flex-col items-center gap-2">
                         <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
-                            <AvatarImage src={preview} alt="Preview" />
+                            <AvatarImage 
+                                src={preview} 
+                                alt="Preview" 
+                                className="object-cover w-full h-full rounded-full"
+                            />
                             <AvatarFallback>
                                 <img src="default-user.png" />
                             </AvatarFallback>
                         </Avatar>       
                         <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
                             Adicionar Foto
-                            <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            <input 
+                                ref={fileInputRef}
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleImageChange} 
+                                className="hidden" 
+                            />
                         </label>
                     </div>
                     <InputField name="name" label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={formData.name} placeholder="Digite o nome" onChange={handleChange} />
@@ -565,6 +719,7 @@ function ModalCreate ({user, type}: ModalProps){
                         placeholder="Digite o telefone" onChange={handleChange} />
                         <InputField name="cpf" label="CPF" icon={<FontAwesomeIcon icon={faIdCard} />} value={formData.cpf} placeholder="Digite o CPF" onChange={handleChange} />
                     </div>
+                    <InputField name="birth_date" label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={formData.birth_date} type="date" onChange={handleChange} />
 
                     {type === "patient" && (
                         <div className="flex flex-col gap-3">
@@ -580,7 +735,6 @@ function ModalCreate ({user, type}: ModalProps){
                                     onChange={handleSelectChange}
                                     value={gender}
                                 />
-                                <InputField name="birth_date" label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={formData.birth_date} type="date" onChange={handleChange} />
                             </div>
                             <InputField name="emergency_contact" label="Contato de Emergência" icon={<FontAwesomeIcon icon={faCommentMedical} />} value={formData.emergency_contact} placeholder="Digite o contato de emergência" onChange={handleChange} />
                             <InputField name="medical_history" label="Histórico Médico" value={formData.medical_history} isTextArea={true} placeholder="Digite o histórico médico" onChange={handleChange} />
@@ -622,7 +776,18 @@ function ModalCreate ({user, type}: ModalProps){
                     )}
 
                     <div className="w-full flex justify-center pt-4 gap-3">
-                        <button className=" bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer hover:bg-[#1C4F4A]" style={{ display: type === "patient" ? "none" : "flex" }}> Criar </button>
+                        <button 
+                            onClick={type === "admin" ? handleCreate : undefined}
+                            disabled={type === "admin" ? isCreating : false}
+                            className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
+                                type === "admin" && isCreating 
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-[#030D29] hover:bg-[#1C4F4A]'
+                            }`} 
+                            style={{ display: type === "patient" ? "none" : "flex" }}
+                        > 
+                            {type === "admin" && isCreating ? "Criando..." : "Criar"}
+                        </button>
                         <DialogClose className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer text-base">Fechar</DialogClose>
                         {type === "patient" && (
                             <div className="flex justify-center">
@@ -644,21 +809,61 @@ function ModalCreate ({user, type}: ModalProps){
 function ModalDelete({ user, type }: ModalProps) {
     if (!user) return null;
 
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        if (!user || isDeleting) return;
+
+        setIsDeleting(true);
+
+        try {
+            const response = await fetch(`/admin/admins/${user.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao deletar administrador');
+            }
+        } catch (error) {
+            console.error('Erro ao deletar:', error);
+            alert('Erro ao deletar administrador');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl overflow-y-auto">
         <DialogHeader>
             <DialogTitle className="text-white text-center p-2">Excluir {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
             <DialogDescription className=" flex flex-col items-center text-base bg-white text-[#030D29] rounded-b-2xl space-y-4 p-7">
-                Tem certeza que deseja excluir o usuário {user.name}?
-                <div className="w-full flex justify-center bg-white p-3 rounded-b-2xl">
-                    <DialogFooter>
-                    <DialogClose className="text-white text-base bg-[#030D29] px-5 py-1 rounded hover:scale-105 transition cursor-pointer">
-                        Excluir
-                    </DialogClose>
+                <div className="text-center">
+                    <p className="mb-2">Tem certeza que deseja excluir o usuário <strong>{user.name}</strong>?</p>
+                    <p className="text-sm text-gray-600">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div className="w-full flex justify-center bg-white p-3 rounded-b-2xl gap-3">
+                    <button
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
+                            isDeleting 
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : 'bg-red-600 hover:bg-red-700'
+                        }`}
+                    >
+                        {isDeleting ? 'Excluindo...' : 'Excluir'}
+                    </button>
                     <DialogClose className="text-white text-base bg-[#030D29] px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer">
-                        Fechar
+                        Cancelar
                     </DialogClose>
-                    </DialogFooter>
                 </div>
             </DialogDescription>
         </DialogHeader>
