@@ -656,21 +656,62 @@ function ModalCreate ({user, type}: ModalProps){
 function ModalDelete({ user, type }: ModalProps) {
     if (!user) return null;
 
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        if (!user || isDeleting) return;
+
+        setIsDeleting(true);
+
+        try {
+            const response = await fetch(`/admin/admins/${user.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Recarrega a página para atualizar a lista
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao deletar administrador');
+            }
+        } catch (error) {
+            console.error('Erro ao deletar:', error);
+            alert('Erro ao deletar administrador');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl overflow-y-auto">
         <DialogHeader>
             <DialogTitle className="text-white text-center p-2">Excluir {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
             <DialogDescription className=" flex flex-col items-center text-base bg-white text-[#030D29] rounded-b-2xl space-y-4 p-7">
-                Tem certeza que deseja excluir o usuário {user.name}?
-                <div className="w-full flex justify-center bg-white p-3 rounded-b-2xl">
-                    <DialogFooter>
-                    <DialogClose className="text-white text-base bg-[#030D29] px-5 py-1 rounded hover:scale-105 transition cursor-pointer">
-                        Excluir
-                    </DialogClose>
+                <div className="text-center">
+                    <p className="mb-2">Tem certeza que deseja excluir o usuário <strong>{user.name}</strong>?</p>
+                    <p className="text-sm text-gray-600">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div className="w-full flex justify-center bg-white p-3 rounded-b-2xl gap-3">
+                    <button
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
+                            isDeleting 
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : 'bg-red-600 hover:bg-red-700'
+                        }`}
+                    >
+                        {isDeleting ? 'Excluindo...' : 'Excluir'}
+                    </button>
                     <DialogClose className="text-white text-base bg-[#030D29] px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer">
-                        Fechar
+                        Cancelar
                     </DialogClose>
-                    </DialogFooter>
                 </div>
             </DialogDescription>
         </DialogHeader>

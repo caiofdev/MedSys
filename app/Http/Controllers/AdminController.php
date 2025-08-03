@@ -63,6 +63,28 @@ class AdminController extends Controller
 
     public function destroy(Admin $admin)
     {
-        
+        if ($admin->is_master) {
+            $masterCount = Admin::where('is_master', true)->count();
+            if ($masterCount <= 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Não é possível deletar o último administrador master do sistema.'
+                ], 400);
+            }
+        }
+
+        try {
+            $admin->user->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Administrador deletado com sucesso.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao deletar administrador: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

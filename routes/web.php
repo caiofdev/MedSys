@@ -20,6 +20,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin/doctors', [DoctorController::class, 'index'])->name('doctor.table')->middleware('user.type:admin');
     Route::get('admin/receptionists', [ReceptionistController::class, 'index'])->name('receptionist.table')->middleware('user.type:admin');
 
+    Route::get('admin/admins/{admin}', [AdminController::class, 'show'])->name('admin.show')->middleware('user.type:admin');
+    Route::delete('admin/admins/{admin}', [AdminController::class, 'destroy'])->name('admin.destroy')->middleware('user.type:admin');
+
     Route::get('doctor/dashboard', [DashboardController::class, 'doctorDashboard'])->name('doctor.dashboard')->middleware('user.type:doctor');
 
     Route::get('receptionist/dashboard', [DashboardController::class, 'receptionistDashboard'])->name('receptionist.dashboard')->middleware('user.type:receptionist');
