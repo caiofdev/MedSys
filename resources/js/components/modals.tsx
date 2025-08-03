@@ -168,9 +168,18 @@ function ModalProvider({ children }: { children: ReactNode }) {
     
     const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { name, value } = e.target;
-        if (name === "especiality") setEspeciality(value);
-        if (name === "gender") setGender(value);
-        if (name === "is_master") setIsMaster(value);
+        if (name === "especiality") {
+            setEspeciality(value);
+            setFormData((prev) => ({ ...prev, especiality: value }));
+        }
+        if (name === "gender") {
+            setGender(value);
+            setFormData((prev) => ({ ...prev, gender: value }));
+        }
+        if (name === "is_master") {
+            setIsMaster(value);
+            setFormData((prev) => ({ ...prev, is_master: value }));
+        }
     };
     
     const resetFormData = () => {
@@ -360,12 +369,11 @@ function ModalView({ user, type }: ModalProps)  {
                         disabled
                     />
                 )}
-
+                <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toDateString() ?? ""} disabled />
                 { type=="patient" && (
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-3">
                             <InputField label="Gênero" icon={""} value={user.gender ?? ""} disabled />
-                            <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toDateString() ?? ""} disabled />
                         </div>
                             <InputField
                                 label="Contato de Emergência"
@@ -583,6 +591,9 @@ function ModalEdit({ user, type }: ModalProps) {
 }
 
 function ModalCreate ({user, type}: ModalProps){
+    const [isCreating, setIsCreating] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const {
         preview,
         especiality,
@@ -605,6 +616,61 @@ function ModalCreate ({user, type}: ModalProps){
         resetAddressData();
     }, []);
 
+    const handleCreate = async () => {
+        if (isCreating) return;
+
+        if (!formData.name || !formData.email || !formData.password || !formData.cpf || !formData.phone || !formData.birth_date) {
+            alert('Por favor, preencha todos os campos obrigatórios.');
+            return;
+        }
+
+        if (type === "admin" && !formData.is_master) {
+            alert('Por favor, selecione se é administrador master.');
+            return;
+        }
+
+        setIsCreating(true);
+
+        try {
+            const submitFormData = new FormData();
+            submitFormData.append('name', formData.name);
+            submitFormData.append('email', formData.email);
+            submitFormData.append('cpf', formData.cpf);
+            submitFormData.append('phone', formData.phone);
+            submitFormData.append('password', formData.password);
+            submitFormData.append('birth_date', formData.birth_date);
+
+            if (type === "admin") {
+                submitFormData.append('is_master', formData.is_master);
+            }
+
+            if (fileInputRef.current?.files?.[0]) {
+                submitFormData.append('photo', fileInputRef.current.files[0]);
+            }
+
+            const response = await fetch('/admin/admins', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+                body: submitFormData,
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao criar administrador');
+            }
+        } catch (error) {
+            console.error('Erro ao criar:', error);
+            alert('Erro ao criar administrador');
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl ">
             <DialogHeader className="flex-shrink-0">
@@ -624,7 +690,13 @@ function ModalCreate ({user, type}: ModalProps){
                         </Avatar>       
                         <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
                             Adicionar Foto
-                            <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            <input 
+                                ref={fileInputRef}
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleImageChange} 
+                                className="hidden" 
+                            />
                         </label>
                     </div>
                     <InputField name="name" label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={formData.name} placeholder="Digite o nome" onChange={handleChange} />
@@ -635,6 +707,7 @@ function ModalCreate ({user, type}: ModalProps){
                         placeholder="Digite o telefone" onChange={handleChange} />
                         <InputField name="cpf" label="CPF" icon={<FontAwesomeIcon icon={faIdCard} />} value={formData.cpf} placeholder="Digite o CPF" onChange={handleChange} />
                     </div>
+                    <InputField name="birth_date" label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={formData.birth_date} type="date" onChange={handleChange} />
 
                     {type === "patient" && (
                         <div className="flex flex-col gap-3">
@@ -650,7 +723,6 @@ function ModalCreate ({user, type}: ModalProps){
                                     onChange={handleSelectChange}
                                     value={gender}
                                 />
-                                <InputField name="birth_date" label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={formData.birth_date} type="date" onChange={handleChange} />
                             </div>
                             <InputField name="emergency_contact" label="Contato de Emergência" icon={<FontAwesomeIcon icon={faCommentMedical} />} value={formData.emergency_contact} placeholder="Digite o contato de emergência" onChange={handleChange} />
                             <InputField name="medical_history" label="Histórico Médico" value={formData.medical_history} isTextArea={true} placeholder="Digite o histórico médico" onChange={handleChange} />
@@ -692,7 +764,18 @@ function ModalCreate ({user, type}: ModalProps){
                     )}
 
                     <div className="w-full flex justify-center pt-4 gap-3">
-                        <button className=" bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer hover:bg-[#1C4F4A]" style={{ display: type === "patient" ? "none" : "flex" }}> Criar </button>
+                        <button 
+                            onClick={type === "admin" ? handleCreate : undefined}
+                            disabled={type === "admin" ? isCreating : false}
+                            className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
+                                type === "admin" && isCreating 
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-[#030D29] hover:bg-[#1C4F4A]'
+                            }`} 
+                            style={{ display: type === "patient" ? "none" : "flex" }}
+                        > 
+                            {type === "admin" && isCreating ? "Criando..." : "Criar"}
+                        </button>
                         <DialogClose className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer text-base">Fechar</DialogClose>
                         {type === "patient" && (
                             <div className="flex justify-center">
@@ -733,7 +816,6 @@ function ModalDelete({ user, type }: ModalProps) {
             const data = await response.json();
 
             if (data.success) {
-                // Recarrega a página para atualizar a lista
                 window.location.reload();
             } else {
                 alert(data.message || 'Erro ao deletar administrador');

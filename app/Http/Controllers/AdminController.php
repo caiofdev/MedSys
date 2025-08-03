@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -33,7 +34,60 @@ class AdminController extends Controller
 
     public function store(Request $request)
     {
-        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'cpf' => 'required|string|max:14|unique:users,cpf',
+            'phone' => 'required|string|max:20',
+            'password' => 'required|string|min:6',
+            'birth_date' => 'required|date',
+            'is_master' => 'required|in:yes,no',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        try {
+            $userData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'cpf' => $validated['cpf'],
+                'phone' => $validated['phone'],
+                'password' => bcrypt($validated['password']),
+                'birth_date' => $validated['birth_date'],
+            ];
+
+            if ($request->hasFile('photo')) {
+                $file = $request->file('photo');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('storage/photos'), $filename);
+                $userData['photo'] = 'photos/' . $filename;
+            }
+
+            $user = User::create($userData);
+
+            $admin = Admin::create([
+                'user_id' => $user->id,
+                'is_master' => $validated['is_master'] === 'yes',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Administrador criado com sucesso.',
+                'admin' => [
+                    'id' => $admin->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'cpf' => $user->cpf,
+                    'phone' => $user->phone,
+                    'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
+                    'is_master' => $admin->is_master,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao criar administrador: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function show(Admin $admin)
