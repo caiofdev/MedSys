@@ -74,6 +74,7 @@ class AdminController extends Controller
                     'cpf' => $user->cpf,
                     'phone' => $user->phone,
                     'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
+                    'birth_date' => $user->birth_date,
                     'is_master' => $admin->is_master,
                 ]
             ]);
