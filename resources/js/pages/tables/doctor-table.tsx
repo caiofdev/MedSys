@@ -20,11 +20,13 @@ interface User {
     cpf: string;
     phone: string;
     photo: string | undefined;
+    birth_date?: Date;
 }
 
 interface Doctor {
     id: number;
     user_id: number;
+    crm: string;
     user: User;
 }
 
@@ -53,7 +55,9 @@ export default function DoctorTable({ doctors, filters }: DoctorTableProps) {
         email: doctor.user.email,
         phone: doctor.user.phone,
         cpf: doctor.user.cpf,
-        photo: doctor.user.photo,
+        photo: doctor.user.photo ? `/storage/${doctor.user.photo}` : undefined,
+        birth_date: doctor.user.birth_date ? new Date(doctor.user.birth_date) : new Date(),
+        crm: doctor.crm,
     }));
 
     useEffect(() => {

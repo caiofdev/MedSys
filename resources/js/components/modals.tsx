@@ -735,15 +735,15 @@ function ModalEdit({ user, type }: ModalProps) {
 
             <div className="w-full flex justify-center pt-4 gap-3">
                 <button 
-                    onClick={type === "admin" ? handleSave : undefined}
-                    disabled={type === "admin" ? isSaving : false}
+                    onClick={(type === "admin" || type === "doctor") ? handleSave : undefined}
+                    disabled={(type === "admin" || type === "doctor") ? isSaving : false}
                     className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
-                        type === "admin" && isSaving 
+                        (type === "admin" || type === "doctor") && isSaving 
                             ? 'bg-gray-400 cursor-not-allowed' 
                             : 'bg-[#030D29] hover:bg-[#1C4F4A]'
                     }`}
                 >
-                    {type === "admin" && isSaving ? 'Salvando...' : 'Salvar'}
+                    {(type === "admin" || type === "doctor") && isSaving ? 'Salvando...' : 'Salvar'}
                 </button>
                 {type === "patient" && (
                     <div className="flex justify-center">
@@ -994,16 +994,16 @@ function ModalCreate ({user, type}: ModalProps){
 
                     <div className="w-full flex justify-center pt-4 gap-3">
                         <button 
-                            onClick={type === "admin" ? handleCreate : undefined}
-                            disabled={type === "admin" ? isCreating : false}
+                            onClick={(type === "admin" || type === "doctor") ? handleCreate : undefined}
+                            disabled={(type === "admin" || type === "doctor") ? isCreating : false}
                             className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
-                                type === "admin" && isCreating 
+                                (type === "admin" || type === "doctor") && isCreating 
                                     ? 'bg-gray-400 cursor-not-allowed' 
                                     : 'bg-[#030D29] hover:bg-[#1C4F4A]'
                             }`} 
                             style={{ display: type === "patient" ? "none" : "flex" }}
                         > 
-                            {type === "admin" && isCreating ? "Criando..." : "Criar"}
+                            {(type === "admin" || type === "doctor") && isCreating ? "Criando..." : "Criar"}
                         </button>
                         <DialogClose className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer text-base">Fechar</DialogClose>
                         {type === "patient" && (
