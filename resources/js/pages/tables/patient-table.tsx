@@ -23,16 +23,6 @@ interface Patient {
     birth_date: string;
     emergency_contact: string;
     medical_history?: string;
-    address?: {
-        id: number;
-        country: string;
-        state: string;
-        city: string;
-        street: string;
-        neighborhood: string;
-        postal_code: string;
-        number: string;
-    } | null;
 }
 
 interface PaginatedPatients {
@@ -60,12 +50,7 @@ export default function PatientTable({ patients, filters }: PatientTableProps) {
         email: patient.email,
         phone: patient.phone,
         cpf: patient.cpf,
-        photo: undefined,
-        birth_date: patient.birth_date ? new Date(patient.birth_date) : undefined,
-        gender: patient.gender,
-        emergency_contact: patient.emergency_contact,
-        medical_history: patient.medical_history,
-        address: patient.address || null
+        photo: undefined
     }));
 
     useEffect(() => {
