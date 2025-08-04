@@ -26,11 +26,6 @@ class DoctorController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        
-    }
-
     public function store(Request $request)
     {
         
@@ -38,12 +33,18 @@ class DoctorController extends Controller
 
     public function show(Doctor $doctor)
     {
+        $doctor->load('user');
         
-    }
-
-    public function edit(Doctor $doctor)
-    {
-        
+        return response()->json([
+            'id' => $doctor->id,
+            'name' => $doctor->user->name,
+            'email' => $doctor->user->email,
+            'cpf' => $doctor->user->cpf,
+            'phone' => $doctor->user->phone,
+            'photo' => $doctor->user->photo ? asset('storage/' . $doctor->user->photo) : null,
+            'birth_date' => $doctor->user->birth_date,
+            'crm' => $doctor->crm,
+        ]);
     }
 
     public function update(Request $request, Doctor $doctor)
