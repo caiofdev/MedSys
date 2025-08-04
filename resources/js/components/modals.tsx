@@ -420,7 +420,13 @@ function useModal() {
 
 function ModalView({ user, type }: ModalProps)  {
     const getInitials = useInitials();
-    const { renderAddress, renderDescription, handleNext, handleBack } = useModal();
+    const { renderAddress, renderDescription, handleNext, handleBack, initializeEditMode } = useModal();
+
+    useEffect(() => {
+        if (user) {
+            initializeEditMode(user);
+        }
+    }, [user]);
 
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl overflow-y-auto">

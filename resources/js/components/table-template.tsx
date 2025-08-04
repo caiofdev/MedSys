@@ -32,8 +32,32 @@ export default function Table({ users, type}: TableProps) {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [operation, setOperation] = useState<"view" | "edit" | "delete" | "create" | null>(null);
 
-    const handleAction = (user: User | null, action: "view" | "edit" | "delete" | "create") => {
-        setSelectedUser(user);
+    const handleAction = async (user: User | null, action: "view" | "edit" | "delete" | "create") => {
+        if (action === "view" && user && type === "patient") {
+            try {
+                const response = await fetch(`/admin/patients/${user.id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                    },
+                });
+
+                if (response.ok) {
+                    const patientData = await response.json();
+                    setSelectedUser(patientData);
+                } else {
+                    console.error('Erro ao buscar dados do paciente');
+                    setSelectedUser(user);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados do paciente:', error);
+                setSelectedUser(user);
+            }
+        } else {
+            setSelectedUser(user);
+        }
+        
         setOperation(action);
         setOpen(true);
     };
