@@ -25,17 +25,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('admin/admins/{admin}', [AdminController::class, 'show'])->name('admin.show')->middleware('user.type:admin');
     Route::post('admin/admins', [AdminController::class, 'store'])->name('admin.store')->middleware('user.type:admin');
-    Route::post('admin/admins/{admin}', [AdminController::class, 'update'])->name('admin.update.post')->middleware('user.type:admin');
     Route::put('admin/admins/{admin}', [AdminController::class, 'update'])->name('admin.update')->middleware('user.type:admin');
     Route::delete('admin/admins/{admin}', [AdminController::class, 'destroy'])->name('admin.destroy')->middleware('user.type:admin');
 
     Route::get('admin/doctors/{doctor}', [DoctorController::class, 'show'])->name('doctor.show')->middleware('user.type:admin');
     Route::post('admin/doctors', [DoctorController::class, 'store'])->name('doctor.store')->middleware('user.type:admin');
-    Route::post('admin/doctors/{doctor}', [DoctorController::class, 'update'])->name('doctor.update.post')->middleware('user.type:admin');
     Route::put('admin/doctors/{doctor}', [DoctorController::class, 'update'])->name('doctor.update')->middleware('user.type:admin');
     Route::delete('admin/doctors/{doctor}', [DoctorController::class, 'destroy'])->name('doctor.destroy')->middleware('user.type:admin');
 
     Route::get('admin/receptionists/{receptionist}', [ReceptionistController::class, 'show'])->name('receptionist.show')->middleware('user.type:admin');
+    Route::put('admin/receptionists/{receptionist}', [ReceptionistController::class, 'update'])->name('receptionist.update')->middleware('user.type:admin');
 });
 
 require __DIR__.'/settings.php';
