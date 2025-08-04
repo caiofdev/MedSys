@@ -60,7 +60,7 @@ export default function PatientTable({ patients, filters }: PatientTableProps) {
     useEffect(() => {
         if (searchTerm !== (filters?.search || '')) {
             const delayedSearch = setTimeout(() => {
-                router.get('/patient-table', { search: searchTerm }, { 
+                router.get('/receptionist/patients', { search: searchTerm }, { 
                     preserveState: true,
                     preserveScroll: true 
                 });
@@ -76,7 +76,7 @@ export default function PatientTable({ patients, filters }: PatientTableProps) {
             <div className="flex flex-col space-y-6 justify-center mt-5">
                 <div className='flex flex-row justify-between ml-30 mr-30'>
                     <SearchBox 
-                        placeHolder="Buscar por nome do administrador..." 
+                        placeHolder="Buscar por um paciente..." 
                         value={searchTerm}
                         onChange={setSearchTerm}
                     />
