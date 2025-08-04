@@ -146,6 +146,22 @@ class DoctorController extends Controller
 
     public function destroy(Doctor $doctor)
     {
-        
+        try {
+            if ($doctor->user->photo && file_exists(public_path('storage/' . $doctor->user->photo))) {
+                unlink(public_path('storage/' . $doctor->user->photo));
+            }
+
+            $doctor->user->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Médico deletado com sucesso.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao deletar médico: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
