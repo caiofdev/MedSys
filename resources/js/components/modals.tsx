@@ -6,6 +6,135 @@ import { faUser, faEnvelope, faIdCard, faPhone, faGear, faIdCardClip, faCommentM
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import InputError from "./input-error";
+
+const validateUserData = (formData: any, type: string, isEdit: boolean = false, fileInput?: HTMLInputElement | null) => {
+    const errors: string[] = [];
+    
+    if (!formData.name || formData.name.trim() === '') {
+        errors.push("Nome é obrigatório");
+    }
+    
+    if (!formData.email || formData.email.trim() === '') {
+        errors.push("E-mail é obrigatório");
+    } else {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            errors.push("E-mail deve ter um formato válido");
+        }
+    }
+    
+    if (!isEdit) {
+        if (!formData.cpf || formData.cpf.trim() === '') {
+            errors.push("CPF é obrigatório");
+        } else {
+            const cleanCpf = formData.cpf.replace(/\D/g, '');
+            if (cleanCpf.length !== 11) {
+                errors.push("CPF deve ter 11 dígitos");
+            }
+        }
+    }
+    
+    if (!formData.phone || formData.phone.trim() === '') {
+        errors.push("Telefone é obrigatório");
+    } else if (formData.phone.length > 20) {
+        errors.push("Telefone deve ter no máximo 20 caracteres");
+    }
+    
+    if (!isEdit) {
+        if (!formData.password || formData.password.trim() === '') {
+            errors.push("Senha é obrigatória");
+        } else if (formData.password.length < 6) {
+            errors.push("Senha deve ter pelo menos 6 caracteres");
+        }
+        
+        if (!formData.birth_date) {
+            errors.push("Data de nascimento é obrigatória");
+        }
+    }
+
+    if (type === "admin" && !isEdit) {
+        if (!formData.is_master || !['yes', 'no'].includes(formData.is_master)) {
+            errors.push("Administrador Master deve ser 'Sim' ou 'Não'");
+        }
+    }
+
+    if (type === "doctor" && !isEdit) {
+        if (!formData.crm || formData.crm.trim() === '') {
+            errors.push("CRM é obrigatório");
+        }
+    }
+
+    if (type === "receptionist" && !isEdit) {
+        if (!formData.register_number || formData.register_number.trim() === '') {
+            errors.push("Número de registro é obrigatório");
+        }
+    }
+
+    if (type === "patient" && !isEdit) {
+        if (!formData.gender || formData.gender === "Selecione o gênero") {
+            errors.push("Gênero é obrigatório");
+        }
+        if (!formData.emergency_contact || formData.emergency_contact.trim() === '') {
+            errors.push("Contato de emergência é obrigatório");
+        }
+    }
+
+    if (fileInput?.files?.[0]) {
+        const file = fileInput.files[0];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+        const maxSize = 2048 * 1024;
+        
+        if (!allowedTypes.includes(file.type)) {
+            errors.push("Foto deve ser do tipo: JPEG, PNG, JPG ou GIF");
+        }
+        
+        if (file.size > maxSize) {
+            errors.push("Foto deve ter no máximo 2MB");
+        }
+    }
+
+    return errors;
+};
+
+const validateAddressData = (addressFormData: any) => {
+    const errors: string[] = [];
+    
+    if (!addressFormData.country || addressFormData.country.trim() === '') {
+        errors.push("País é obrigatório");
+    }
+    
+    if (!addressFormData.state || addressFormData.state.trim() === '') {
+        errors.push("Estado é obrigatório");
+    }
+    
+    if (!addressFormData.city || addressFormData.city.trim() === '') {
+        errors.push("Cidade é obrigatória");
+    }
+    
+    if (!addressFormData.street || addressFormData.street.trim() === '') {
+        errors.push("Rua é obrigatória");
+    }
+    
+    if (!addressFormData.neighborhood || addressFormData.neighborhood.trim() === '') {
+        errors.push("Bairro é obrigatório");
+    }
+    
+    if (!addressFormData.postal_code || addressFormData.postal_code.trim() === '') {
+        errors.push("CEP é obrigatório");
+    } else {
+        const cleanCep = addressFormData.postal_code.replace(/\D/g, '');
+        if (cleanCep.length !== 8) {
+            errors.push("CEP deve ter 8 dígitos");
+        }
+    }
+    
+    if (!addressFormData.number || addressFormData.number.trim() === '') {
+        errors.push("Número é obrigatório");
+    }
+
+    return errors;
+};
 
 interface User {
     id: number
@@ -50,7 +179,6 @@ interface ModalContextType {
     renderDescription: string;
     
     preview: string;
-    especiality: string;
     gender: string;
     is_master: string;
 
@@ -65,7 +193,6 @@ interface ModalContextType {
         birth_date: string;
         emergency_contact: string;
         gender: string;
-        especiality: string;
         crm: string;
         register_number: string;
         password: string;
@@ -84,7 +211,6 @@ interface ModalContextType {
     setRenderAddress: (value: string) => void;
     setRenderDescription: (value: string) => void;
     setPreview: (value: string) => void;
-    setEspeciality: (value: string) => void;
     setGender: (value: string) => void;
     setIsMaster: (value: string) => void;
     setFormData: React.Dispatch<React.SetStateAction<any>>;
@@ -110,7 +236,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
     const [renderDescription, setRenderDescription] = useState('flex');
     
     const [preview, setPreview] = useState("");
-    const [especiality, setEspeciality] = useState("Selecione a especialidade");
     const [gender, setGender] = useState("Selecione o gênero");
     const [is_master, setIsMaster] = useState("Selecione a opção");
     
@@ -125,7 +250,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
         birth_date: "",
         emergency_contact: "",
         gender: "",
-        especiality: "",
         crm: "",
         register_number: "",
         password: "",
@@ -168,10 +292,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
     
     const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { name, value } = e.target;
-        if (name === "especiality") {
-            setEspeciality(value);
-            setFormData((prev) => ({ ...prev, especiality: value }));
-        }
         if (name === "gender") {
             setGender(value);
             setFormData((prev) => ({ ...prev, gender: value }));
@@ -194,13 +314,11 @@ function ModalProvider({ children }: { children: ReactNode }) {
             birth_date: "",
             emergency_contact: "",
             gender: "",
-            especiality: "",
             crm: "",
             register_number: "",
             password: "",
         });
         setPreview("");
-        setEspeciality("Selecione a especialidade");
         setGender("Selecione o gênero");
         setIsMaster("Selecione a opção");
     };
@@ -231,7 +349,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
             birth_date: user.birth_date?.toString() || "",
             emergency_contact: user.emergency_contact || "",
             gender: user.gender || "",
-            especiality: user.especiality || "",
             crm: user.crm || "",
             register_number: user.register_number || "",
             password: "",
@@ -248,7 +365,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
         });
         
         setPreview(user.photo || "");
-        setEspeciality(user.especiality || "Selecione a especialidade");
         setGender(user.gender || "Selecione o gênero");
         setIsMaster(
             typeof user.is_master === 'boolean' 
@@ -262,7 +378,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
         renderAddress,
         renderDescription,
         preview,
-        especiality,
         gender,
         is_master,
         formData,
@@ -271,7 +386,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
         setRenderAddress,
         setRenderDescription,
         setPreview,
-        setEspeciality,
         setGender,
         setIsMaster,
         setFormData,
@@ -303,7 +417,6 @@ function useModal() {
     }
     return context;
 }
-
 
 function ModalView({ user, type }: ModalProps)  {
     const getInitials = useInitials();
@@ -345,7 +458,6 @@ function ModalView({ user, type }: ModalProps)  {
                 { type=="doctor" && (
                 <div className="flex gap-3">
                     <InputField label="CRM" icon={""} value={user.crm ?? ""} disabled />
-                    <InputField label="Especialidade" icon={""} value={user.especiality ?? ""} disabled />
                 </div>
                 )}
 
@@ -373,7 +485,8 @@ function ModalView({ user, type }: ModalProps)  {
                         disabled
                     />
                 )}
-                <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toDateString() ?? ""} disabled />
+                <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toLocaleDateString() ?? ""} disabled />
+
                 { type=="patient" && (
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-3">
@@ -427,11 +540,12 @@ function ModalEdit({ user, type }: ModalProps) {
     if (!user) return null;
 
     const [isSaving, setIsSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const getInitials = useInitials();
 
     const {
         preview,
-        especiality,
         gender,
         formData,
         renderAddress,
@@ -446,10 +560,20 @@ function ModalEdit({ user, type }: ModalProps) {
 
     useEffect(() => {
         initializeEditMode(user);
+        setErrorMessage("");
     }, [user]);
 
     const handleSave = async () => {
         if (!user || isSaving) return;
+
+        setErrorMessage("");
+
+        const validationErrors = validateUserData(formData, type, true, fileInputRef.current);
+        
+        if (validationErrors.length > 0) {
+            setErrorMessage(validationErrors[0]);
+            return;
+        }
 
         setIsSaving(true);
 
@@ -464,24 +588,75 @@ function ModalEdit({ user, type }: ModalProps) {
                 submitFormData.append('photo', fileInputRef.current.files[0]);
             }
 
-            const response = await fetch(`/admin/admins/${user.id}`, {
+            let updateUrl = '';
+            switch (type) {
+                case 'admin':
+                    updateUrl = `/admin/admins/${user.id}`;
+                    break;
+                case 'doctor':
+                    updateUrl = `/admin/doctors/${user.id}`;
+                    break;
+                case 'receptionist':
+                    updateUrl = `/admin/receptionists/${user.id}`;
+                    break;
+                case 'patient':
+                    updateUrl = `/admin/patients/${user.id}`;
+                    break;
+                default:
+                    throw new Error('Tipo de usuário inválido');
+            }
+
+            // Pegar o token CSRF do meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            if (!csrfToken) {
+                throw new Error('Token CSRF não encontrado');
+            }
+
+            const response = await fetch(updateUrl, {
                 method: 'POST', 
                 headers: {
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                    'X-CSRF-TOKEN': csrfToken,
                 },
                 body: submitFormData,
             });
 
-            const data = await response.json();
-
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message || 'Erro ao atualizar administrador');
+            const contentType = response.headers.get('content-type');
+            
+            if (!response.ok) {
+                if (response.status === 419) {
+                    setErrorMessage('Sessão expirada. Recarregue a página e tente novamente.');
+                    return;
+                }
+                
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    setErrorMessage(errorData.message || 'Erro ao atualizar usuário');
+                } else {
+                    setErrorMessage('Erro no servidor. Tente novamente.');
+                }
+                return;
             }
+
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    setErrorMessage(data.message || 'Erro ao atualizar usuário');
+                }
+            } else {
+                window.location.reload();
+            }
+
         } catch (error) {
             console.error('Erro ao salvar:', error);
-            alert('Erro ao salvar as alterações');
+            if (error instanceof SyntaxError) {
+                setErrorMessage('Erro de comunicação com o servidor. Sessão pode ter expirado.');
+            } else {
+                setErrorMessage('Erro ao salvar as alterações. Tente novamente.');
+            }
         } finally {
             setIsSaving(false);
         }
@@ -506,6 +681,9 @@ function ModalEdit({ user, type }: ModalProps) {
                         alt={user.name} 
                         className="object-cover w-full h-full rounded-full"
                     />
+                            <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
+                                {getInitials(user.name)}
+                            </AvatarFallback>
                 </Avatar>
                 <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
                     Editar Foto
@@ -522,20 +700,6 @@ function ModalEdit({ user, type }: ModalProps) {
             <InputField label="Nome" icon={<FontAwesomeIcon icon={faUser} />} name="name" value={formData.name} onChange={handleChange} />
             <InputField label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} name="email" value={formData.email} onChange={handleChange} />
             <InputField label="Telefone" icon={<FontAwesomeIcon icon={faPhone} />} name="phone" value={formData.phone} onChange={handleChange} />
-
-            { type=="doctor" && (
-                <SelectField
-                    label="Especialidade"
-                    name="especiality"
-                    value={especiality}
-                    onChange={handleSelectChange}
-                    options={[
-                    { label: "especialidade", value: "especialidade" },
-                    { label: "Teste1", value: "test1" },
-                    { label: "Teste2", value: "test2" },
-                    ]}
-                />
-            )}
 
             { type=="patient" && (
                 <div className="flex flex-col gap-3">   
@@ -566,6 +730,8 @@ function ModalEdit({ user, type }: ModalProps) {
                     />
             </div>
             )}
+
+            <InputError message={errorMessage} className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4" />
 
             <div className="w-full flex justify-center pt-4 gap-3">
                 <button 
@@ -600,11 +766,11 @@ function ModalEdit({ user, type }: ModalProps) {
 
 function ModalCreate ({user, type}: ModalProps){
     const [isCreating, setIsCreating] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
         preview,
-        especiality,
         gender,
         is_master,
         renderAddress,
@@ -622,18 +788,18 @@ function ModalCreate ({user, type}: ModalProps){
     useEffect(() => {
         resetFormData();
         resetAddressData();
+        setErrorMessage("");
     }, []);
 
     const handleCreate = async () => {
         if (isCreating) return;
+        
+        setErrorMessage("");
 
-        if (!formData.name || !formData.email || !formData.password || !formData.cpf || !formData.phone || !formData.birth_date) {
-            alert('Por favor, preencha todos os campos obrigatórios.');
-            return;
-        }
-
-        if (type === "admin" && !formData.is_master) {
-            alert('Por favor, selecione se é administrador master.');
+        const validationErrors = validateUserData(formData, type, false, fileInputRef.current);
+        
+        if (validationErrors.length > 0) {
+            setErrorMessage(validationErrors[0]);
             return;
         }
 
@@ -649,46 +815,105 @@ function ModalCreate ({user, type}: ModalProps){
             submitFormData.append('birth_date', formData.birth_date);
 
             if (type === "admin") {
-                submitFormData.append('is_master', formData.is_master);
+            submitFormData.append('is_master', formData.is_master);
+        }
+
+        if (type === "doctor") {
+            submitFormData.append('crm', formData.crm);
+        }
+
+        if (type === "receptionist") {
+            submitFormData.append('register_number', formData.register_number);
+        }
+
+        if (type === "patient") {
+            submitFormData.append('gender', formData.gender);
+            submitFormData.append('emergency_contact', formData.emergency_contact);
+            submitFormData.append('medical_history', formData.medical_history);
+        }
+
+        if (fileInputRef.current?.files?.[0]) {
+            submitFormData.append('photo', fileInputRef.current.files[0]);
+        }
+
+        let createUrl = '';
+        switch (type) {
+            case 'admin':
+                createUrl = '/admin/admins';
+                break;
+            case 'doctor':
+                createUrl = '/admin/doctors';
+                break;
+            case 'receptionist':
+                createUrl = '/admin/receptionists';
+                break;
+            case 'patient':
+                createUrl = '/admin/patients';
+                break;
+            default:
+                throw new Error('Tipo de usuário inválido');
+        }
+
+        const response = await fetch(createUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+            },
+            body: submitFormData,
+        });
+
+        const contentType = response.headers.get('content-type');
+        
+        if (!response.ok) {
+            if (response.status === 419) {
+                setErrorMessage('Sessão expirada. Recarregue a página e tente novamente.');
+                return;
             }
-
-            if (fileInputRef.current?.files?.[0]) {
-                submitFormData.append('photo', fileInputRef.current.files[0]);
+            
+            if (contentType && contentType.includes('application/json')) {
+                const errorData = await response.json();
+                setErrorMessage(errorData.message || 'Erro ao criar usuário');
+            } else {
+                setErrorMessage('Erro no servidor. Tente novamente.');
             }
+            return;
+        }
 
-            const response = await fetch('/admin/admins', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-                },
-                body: submitFormData,
-            });
-
+        if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-
+            
             if (data.success) {
                 window.location.reload();
             } else {
-                alert(data.message || 'Erro ao criar administrador');
+                setErrorMessage(data.message || 'Erro ao criar usuário');
             }
-        } catch (error) {
-            console.error('Erro ao criar:', error);
-            alert('Erro ao criar administrador');
-        } finally {
-            setIsCreating(false);
+        } else {
+            window.location.reload();
         }
-    };
+
+    } catch (error) {
+        console.error('Erro ao criar:', error);
+        if (error instanceof SyntaxError) {
+            setErrorMessage('Erro de comunicação com o servidor. Sessão pode ter expirado.');
+        } else {
+            setErrorMessage('Erro ao criar usuário. Verifique os dados e tente novamente.');
+        }
+    } finally {
+        setIsCreating(false);
+    }
+};
 
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl ">
             <DialogHeader className="flex-shrink-0">
-                <DialogTitle className="text-white text-center p-2 hover:bg-[#1C4F4A]">Criar {type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
+                <DialogTitle className="text-white text-center p-2">Criar {type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
                 <ModalAddress 
                     user={user} 
-                    modalType='create' 
+                    modalType='create'
                     address={user?.address || null} 
                 />
                 <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar flex-col" style={{ display: renderDescription }}>
+
                     <div className="flex flex-col items-center gap-2">
                         <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
                             <AvatarImage 
@@ -696,8 +921,8 @@ function ModalCreate ({user, type}: ModalProps){
                                 alt="Preview" 
                                 className="object-cover w-full h-full rounded-full"
                             />
-                            <AvatarFallback>
-                                <img src="default-user.png" />
+                            <AvatarFallback className="bg-gray-200 text-gray-600 flex items-center justify-center">
+                                <FontAwesomeIcon icon={faUser} className="text-3xl" />
                             </AvatarFallback>
                         </Avatar>       
                         <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
@@ -744,17 +969,6 @@ function ModalCreate ({user, type}: ModalProps){
                     {type === "doctor" && (
                         <div className="flex gap-3">
                             <InputField name="crm" label="CRM" icon={<FontAwesomeIcon icon={faIdCardClip} />} value={formData.crm} placeholder="Digite o CRM" onChange={handleChange} />
-                            <SelectField
-                                name="especiality"
-                                label="Especialidade"
-                                options={[
-                                    { label: "Cardiologia", value: "cardiology" },
-                                    { label: "Pediatria", value: "pediatrics" },
-                                    { label: "Ortopedia", value: "orthopedics" },
-                                ]}
-                                onChange={handleSelectChange}
-                                value={especiality}
-                            />
                         </div>
                     )}
 
@@ -767,6 +981,7 @@ function ModalCreate ({user, type}: ModalProps){
                             name="is_master"
                             label="Administrador Master"
                             options={[
+                                { label: "Selecione a opção", value: "" },
                                 { label: "Sim", value: "yes" },
                                 { label: "Não", value: "no" },
                             ]}
@@ -774,6 +989,8 @@ function ModalCreate ({user, type}: ModalProps){
                             value={is_master}
                         />
                     )}
+
+                    <InputError message={errorMessage} className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4" />
 
                     <div className="w-full flex justify-center pt-4 gap-3">
                         <button 
@@ -817,7 +1034,26 @@ function ModalDelete({ user, type }: ModalProps) {
         setIsDeleting(true);
 
         try {
-            const response = await fetch(`/admin/admins/${user.id}`, {
+            // Determinar a rota correta baseada no tipo
+            let deleteUrl = '';
+            switch (type) {
+                case 'admin':
+                    deleteUrl = `/admin/admins/${user.id}`;
+                    break;
+                case 'doctor':
+                    deleteUrl = `/admin/doctors/${user.id}`;
+                    break;
+                case 'receptionist':
+                    deleteUrl = `/admin/receptionists/${user.id}`;
+                    break;
+                case 'patient':
+                    deleteUrl = `/admin/patients/${user.id}`;
+                    break;
+                default:
+                    throw new Error('Tipo de usuário inválido');
+            }
+
+            const response = await fetch(deleteUrl, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -830,16 +1066,15 @@ function ModalDelete({ user, type }: ModalProps) {
             if (data.success) {
                 window.location.reload();
             } else {
-                alert(data.message || 'Erro ao deletar administrador');
+                alert(data.message || 'Erro ao deletar usuário');
             }
         } catch (error) {
             console.error('Erro ao deletar:', error);
-            alert('Erro ao deletar administrador');
+            alert('Erro ao deletar usuário');
         } finally {
             setIsDeleting(false);
         }
     };
-
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl overflow-y-auto">
         <DialogHeader>
