@@ -735,15 +735,15 @@ function ModalEdit({ user, type }: ModalProps) {
 
             <div className="w-full flex justify-center pt-4 gap-3">
                 <button 
-                    onClick={(type === "admin" || type === "doctor") ? handleSave : undefined}
-                    disabled={(type === "admin" || type === "doctor") ? isSaving : false}
+                    onClick={(type === "admin" || type === "doctor" || type === "receptionist") ? handleSave : undefined}
+                    disabled={(type === "admin" || type === "doctor" || type === "receptionist") ? isSaving : false}
                     className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
-                        (type === "admin" || type === "doctor") && isSaving 
+                        (type === "admin" || type === "doctor" || type === "receptionist") && isSaving 
                             ? 'bg-gray-400 cursor-not-allowed' 
                             : 'bg-[#030D29] hover:bg-[#1C4F4A]'
                     }`}
                 >
-                    {(type === "admin" || type === "doctor") && isSaving ? 'Salvando...' : 'Salvar'}
+                    {(type === "admin" || type === "doctor" || type === "receptionist") && isSaving ? 'Salvando...' : 'Salvar'}
                 </button>
                 {type === "patient" && (
                     <div className="flex justify-center">
