@@ -20,6 +20,7 @@ interface User {
     cpf: string;
     phone: string;
     photo: string | undefined;
+    birth_date: Date;
 }
 
 interface Admin {
@@ -56,7 +57,8 @@ export default function AdminTable({ admins, filters }: AdminTableProps) {
         cpf: admin.user.cpf,
         is_master: admin.is_master ? 'Sim' : 'Não',
         photo: admin.user.photo ? `/storage/${admin.user.photo}` : undefined,
-        is_master_bool: admin.is_master
+        is_master_bool: admin.is_master,
+        birth_date: admin.user.birth_date ? new Date(admin.user.birth_date) : new Date(),
     }));
 
     useEffect(() => {
