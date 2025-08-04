@@ -49,7 +49,44 @@ class DoctorController extends Controller
 
     public function update(Request $request, Doctor $doctor)
     {
-        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $doctor->user->id,
+            'phone' => 'required|string|max:20',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+        ];
+
+        if ($request->hasFile('photo')) {
+            if ($doctor->user->photo && file_exists(public_path('storage/' . $doctor->user->photo))) {
+                unlink(public_path('storage/' . $doctor->user->photo));
+            }
+
+            $file = $request->file('photo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('storage/photos'), $filename);
+            $updateData['photo'] = 'photos/' . $filename;
+        }
+
+        $doctor->user->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Médico atualizado com sucesso.',
+            'doctor' => [
+                'id' => $doctor->id,
+                'name' => $doctor->user->name,
+                'email' => $doctor->user->email,
+                'phone' => $doctor->user->phone,
+                'photo' => $doctor->user->photo ? asset('storage/' . $doctor->user->photo) : null,
+                'crm' => $doctor->crm,
+            ]
+        ]);
     }
 
     public function destroy(Doctor $doctor)
