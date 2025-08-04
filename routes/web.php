@@ -34,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('admin/doctors/{doctor}', [DoctorController::class, 'destroy'])->name('doctor.destroy')->middleware('user.type:admin');
 
     Route::get('admin/receptionists/{receptionist}', [ReceptionistController::class, 'show'])->name('receptionist.show')->middleware('user.type:admin');
+    Route::post('admin/receptionists', [ReceptionistController::class, 'store'])->name('receptionist.store')->middleware('user.type:admin');
     Route::put('admin/receptionists/{receptionist}', [ReceptionistController::class, 'update'])->name('receptionist.update')->middleware('user.type:admin');
 });
 
