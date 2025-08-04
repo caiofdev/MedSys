@@ -13,7 +13,6 @@ class DoctorFactory extends Factory
         return [
             'crm' => $this->faker->unique()->numberBetween(100000, 999999),
             'user_id' => User::factory(),
-            'specialty_id' => Specialty::factory(),
         ];
     }
 }
