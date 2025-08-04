@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin/receptionists/{receptionist}', [ReceptionistController::class, 'show'])->name('receptionist.show')->middleware('user.type:admin');
     Route::post('admin/receptionists', [ReceptionistController::class, 'store'])->name('receptionist.store')->middleware('user.type:admin');
     Route::put('admin/receptionists/{receptionist}', [ReceptionistController::class, 'update'])->name('receptionist.update')->middleware('user.type:admin');
+    Route::delete('admin/receptionists/{receptionist}', [ReceptionistController::class, 'destroy'])->name('receptionist.destroy')->middleware('user.type:admin');
 });
 
 require __DIR__.'/settings.php';

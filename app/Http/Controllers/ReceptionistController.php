@@ -146,6 +146,22 @@ class ReceptionistController extends Controller
 
     public function destroy(Receptionist $receptionist)
     {
-        
+        try {
+            if ($receptionist->user->photo && file_exists(public_path('storage/' . $receptionist->user->photo))) {
+                unlink(public_path('storage/' . $receptionist->user->photo));
+            }
+
+            $receptionist->user->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Recepcionista deletado com sucesso.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao deletar recepcionista: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
