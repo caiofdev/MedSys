@@ -22,11 +22,13 @@ interface User {
     cpf: string;
     phone: string;
     photo: string | undefined;
+    birth_date?: Date;
 }
 
 interface Receptionist {
     id: number;
     user_id: number;
+    registration_number: string;
     user: User;
 }
 
@@ -55,7 +57,9 @@ export default function ReceptionistTable({ receptionists, filters }: Receptioni
         email: receptionist.user.email,
         phone: receptionist.user.phone,
         cpf: receptionist.user.cpf,
-        photo: receptionist.user.photo,
+        photo: receptionist.user.photo ? `/storage/${receptionist.user.photo}` : undefined,
+        birth_date: receptionist.user.birth_date ? new Date(receptionist.user.birth_date) : new Date(),
+        register_number: receptionist.registration_number,
     }));
 
     useEffect(() => {

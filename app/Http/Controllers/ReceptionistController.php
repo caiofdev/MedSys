@@ -26,11 +26,6 @@ class ReceptionistController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        
-    }
-
     public function store(Request $request)
     {
         
@@ -38,12 +33,18 @@ class ReceptionistController extends Controller
 
     public function show(Receptionist $receptionist)
     {
+        $receptionist->load('user');
         
-    }
-
-    public function edit(Receptionist $receptionist)
-    {
-        
+        return response()->json([
+            'id' => $receptionist->id,
+            'name' => $receptionist->user->name,
+            'email' => $receptionist->user->email,
+            'cpf' => $receptionist->user->cpf,
+            'phone' => $receptionist->user->phone,
+            'photo' => $receptionist->user->photo ? asset('storage/' . $receptionist->user->photo) : null,
+            'birth_date' => $receptionist->user->birth_date,
+            'register_number' => $receptionist->registration_number,
+        ]);
     }
 
     public function update(Request $request, Receptionist $receptionist)
