@@ -155,6 +155,7 @@ interface ModalContextType {
         date: string
         time: string
         price: number
+        status: string
     };
 
     searchQuery: string;
@@ -223,6 +224,7 @@ function ModalProvider({ children }: { children: ReactNode }) {
         date: new Date().toISOString().split('T')[0],
         time: "",
         price: 0,
+        status: "scheduled",
     });
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -299,6 +301,7 @@ function ModalProvider({ children }: { children: ReactNode }) {
     };
 
     const handleCreateAppointment = async () => {
+        
         if (!appointmentFormData.patient?.id || !appointmentFormData.doctor?.id || !appointmentFormData.date || !appointmentFormData.time || appointmentFormData.price <= 0) {
             alert('Por favor, preencha todos os campos obrigatórios');
             return;
@@ -324,6 +327,7 @@ function ModalProvider({ children }: { children: ReactNode }) {
                     date: appointmentFormData.date,
                     time: appointmentFormData.time,
                     price: appointmentFormData.price,
+                    status: appointmentFormData.status || 'scheduled',
                 }),
             });
 
@@ -332,7 +336,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
             if (response.ok && data.success) {
                 alert(`Consulta agendada com sucesso para ${appointmentFormData.patient.name} com ${appointmentFormData.doctor.name}`);
                 resetAppointmentData();
-                // Recarregar a página ou atualizar a lista de consultas
                 window.location.reload();
             } else {
                 alert(data.message || 'Erro ao agendar consulta');
@@ -435,6 +438,7 @@ function ModalProvider({ children }: { children: ReactNode }) {
             date: new Date().toISOString().split('T')[0],
             time: "",
             price: 0,
+            status: "scheduled",
         });
         setSelectedPatient(null);
         setSearchQuery("");

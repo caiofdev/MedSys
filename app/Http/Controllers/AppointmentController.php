@@ -24,7 +24,8 @@ class AppointmentController extends Controller
             'doctor_id' => 'required|exists:doctors,id',
             'date' => 'required|date|after_or_equal:today',
             'time' => 'required|date_format:H:i',
-            'price' => 'required|numeric|min:0'
+            'price' => 'required|numeric|min:0',
+            'status' => 'required|string|in:scheduled,canceled,completed'
         ], [
             'patient_id.required' => 'Selecione um paciente',
             'patient_id.exists' => 'Paciente não encontrado',
@@ -166,7 +167,7 @@ class AppointmentController extends Controller
             ->when($query, function ($queryBuilder) use ($query) {
                 return $queryBuilder->whereHas('user', function ($userQuery) use ($query) {
                     $userQuery->where('name', 'LIKE', "%{$query}%")
-                              ->orWhere('email', 'LIKE', "%{$query}%");
+                            ->orWhere('email', 'LIKE', "%{$query}%");
                 })->orWhere('crm', 'LIKE', "%{$query}%");
             })
             ->select('id', 'crm', 'user_id')
