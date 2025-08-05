@@ -37,12 +37,12 @@ const adminNavItems: NavItem[] = [
 const doctorNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: '/doctor-dashboard',
+        href: '/doctor/dashboard',
         icon: LayoutGrid,
     },
     {
         title: 'Iniciar Atendimento',
-        href: '/doctor/appointments',
+        href: '/doctor/start-consultation',
         icon: Play,
     },
     {
