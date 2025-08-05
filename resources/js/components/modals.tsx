@@ -23,18 +23,8 @@ interface User {
     especiality?: string
     crm?: string
     register_number?: string
-    address?: Address
 }
 
-interface Address {
-    country: string;
-    state: string;
-    city: string;
-    street: string;
-    neighborhood: string;
-    postal_code: string;
-    number: string;
-}
 
 type ModalType = "view" | "edit" | "create";
 
@@ -47,9 +37,6 @@ interface ModalProps {
 
 interface ModalContextType {
 
-    renderAddress: string;
-    renderDescription: string;
-    
     preview: string;
     especiality: string;
     gender: string;
@@ -71,16 +58,6 @@ interface ModalContextType {
         register_number: string;
         password: string;
     };
-    
-    addressFormData: {
-        country: string;
-        state: string;
-        city: string;
-        street: string;
-        neighborhood: string;
-        postal_code: string;
-        number: string;
-    };
 
     appointmentFormData: {
         patient: User
@@ -88,7 +65,6 @@ interface ModalContextType {
         date: string
         time: string
         price: number
-        observations: string
     };
 
     searchQuery: string;
@@ -98,14 +74,11 @@ interface ModalContextType {
     filteredDoctors: User[];
     selectedDoctor: User | null;
 
-    setRenderAddress: (value: string) => void;
-    setRenderDescription: (value: string) => void;
     setPreview: (value: string) => void;
     setEspeciality: (value: string) => void;
     setGender: (value: string) => void;
     setIsMaster: (value: string) => void;
     setFormData: React.Dispatch<React.SetStateAction<any>>;
-    setAddressFormData: React.Dispatch<React.SetStateAction<any>>;
     setAppointmentFormData: React.Dispatch<React.SetStateAction<any>>;
     
     setSearchQuery: (value: string) => void;
@@ -115,10 +88,7 @@ interface ModalContextType {
     setFilteredDoctors: (value: User[]) => void;
     setSelectedDoctor: (value: User | null) => void;
 
-    handleNext: () => void;
-    handleBack: () => void;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-    handleAddressChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleSelectChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     handleAppointmentChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -128,7 +98,6 @@ interface ModalContextType {
     handleCreateAppointment: () => void;
 
     resetFormData: () => void;
-    resetAddressData: () => void;
     resetAppointmentData: () => void;
     initializeEditMode: (user: User) => void;
 }
@@ -136,10 +105,6 @@ interface ModalContextType {
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 function ModalProvider({ children }: { children: ReactNode }) {
-
-    const [renderAddress, setRenderAddress] = useState('none');
-    const [renderDescription, setRenderDescription] = useState('flex');
-    
     const [preview, setPreview] = useState("");
     const [especiality, setEspeciality] = useState("Selecione a especialidade");
     const [gender, setGender] = useState("Selecione o gênero");
@@ -162,23 +127,12 @@ function ModalProvider({ children }: { children: ReactNode }) {
         password: "",
     });
     
-    const [addressFormData, setAddressFormData] = useState({
-        country: "",
-        state: "",
-        city: "",
-        street: "",
-        neighborhood: "",
-        postal_code: "",
-        number: "",
-    });
-
     const [appointmentFormData, setAppointmentFormData] = useState({
         patient: {} as User,
         doctor: {} as User,
         date: new Date().toISOString().split('T')[0],
         time: "",
         price: 0,
-        observations: "",
     });
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -188,24 +142,9 @@ function ModalProvider({ children }: { children: ReactNode }) {
     const [filteredDoctors, setFilteredDoctors] = useState<User[]>([]);
     const [selectedDoctor, setSelectedDoctor] = useState<User | null>(null);
     
-    const handleNext = () => {
-        setRenderDescription('none');
-        setRenderAddress('flex');
-    };
-    
-    const handleBack = () => {
-        setRenderDescription('flex');
-        setRenderAddress('none');
-    };
-    
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-    
-    const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setAddressFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleAppointmentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -293,18 +232,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
         setIsMaster("Selecione a opção");
     };
     
-    const resetAddressData = () => {
-        setAddressFormData({
-            country: "",
-            state: "",
-            city: "",
-            street: "",
-            neighborhood: "",
-            postal_code: "",
-            number: "",
-        });
-    };
-    
     const initializeEditMode = (user: User) => {
         setFormData({
             name: user.name,
@@ -323,16 +250,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
             password: "",
         });
         
-        setAddressFormData({
-            country: user.address?.country || "",
-            state: user.address?.state || "",
-            city: user.address?.city || "",
-            street: user.address?.street || "",
-            neighborhood: user.address?.neighborhood || "",
-            postal_code: user.address?.postal_code || "",
-            number: user.address?.number || "",
-        });
-        
         setPreview(user.photo || "");
         setEspeciality(user.especiality || "Selecione a especialidade");
         setGender(user.gender || "Selecione o gênero");
@@ -346,7 +263,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
             date: new Date().toISOString().split('T')[0],
             time: "",
             price: 0,
-            observations: "",
         });
         setSelectedPatient(null);
         setSearchQuery("");
@@ -357,15 +273,11 @@ function ModalProvider({ children }: { children: ReactNode }) {
     };
 
     const value = {
-
-        renderAddress,
-        renderDescription,
         preview,
         especiality,
         gender,
         is_master,
         formData,
-        addressFormData,
         appointmentFormData,
         
         searchQuery,
@@ -375,14 +287,11 @@ function ModalProvider({ children }: { children: ReactNode }) {
         filteredDoctors,
         selectedDoctor,
         
-        setRenderAddress,
-        setRenderDescription,
         setPreview,
         setEspeciality,
         setGender,
         setIsMaster,
         setFormData,
-        setAddressFormData,
         setAppointmentFormData,
         
         setSearchQuery,
@@ -392,10 +301,7 @@ function ModalProvider({ children }: { children: ReactNode }) {
         setFilteredDoctors,
         setSelectedDoctor,
         
-        handleNext,
-        handleBack,
         handleChange,
-        handleAddressChange,
         handleImageChange,
         handleSelectChange,
         handleAppointmentChange,
@@ -405,7 +311,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
         handleCreateAppointment,
         
         resetFormData,
-        resetAddressData,
         resetAppointmentData,
         initializeEditMode,
     };
@@ -428,20 +333,12 @@ function useModal() {
 
 function ModalView({ user, type }: ModalProps)  {
     const getInitials = useInitials();
-    const { renderAddress, renderDescription, handleNext, handleBack } = useModal();
 
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl overflow-y-auto">
         <DialogHeader>
             <DialogTitle className="text-white text-center p-2">Detalhes de {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
-            
-            <ModalAddress 
-                user={user} 
-                modalType='view' 
-                address={user?.address || null} 
-            />
-            
-            <DialogDescription className=" flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar" style={{ display: renderDescription }}>
+            <DialogDescription className=" flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar">
             {user ? (
                 <>
                 <div className="flex justify-center">
@@ -512,16 +409,6 @@ function ModalView({ user, type }: ModalProps)  {
 
             <div className="w-full flex justify-center bg-white p-3 rounded-b-2xl">
                 <DialogFooter>
-                    {type === "patient" && (
-                        <div className="w-full flex justify-center">
-                            <button 
-                                onClick={handleNext}
-                                className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer"
-                            >
-                                Ver Endereço
-                            </button>
-                        </div>
-                    )}
                     <DialogClose className="text-white text-base bg-[#030D29] px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer">
                         Fechar
                     </DialogClose>
@@ -542,10 +429,6 @@ function ModalEdit({ user, type }: ModalProps) {
         especiality,
         gender,
         formData,
-        renderAddress,
-        renderDescription,
-        handleNext,
-        handleBack,
         handleChange,
         handleImageChange,
         handleSelectChange,
@@ -560,14 +443,8 @@ function ModalEdit({ user, type }: ModalProps) {
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl">
         <DialogHeader>
             <DialogTitle className="text-white text-center p-2">Editar {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
-
-            <ModalAddress 
-                user={user} 
-                modalType='edit' 
-                address={user?.address || null} 
-            />
             
-            <DialogDescription className="flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar" style={{ display: renderDescription }}>
+            <DialogDescription className="flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar">
             <div className="flex flex-col items-center gap-2">
                 <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
                     <AvatarImage src={preview} alt={user.name} />
@@ -628,16 +505,6 @@ function ModalEdit({ user, type }: ModalProps) {
 
             <div className="w-full flex justify-center pt-4 gap-3">
                 <button className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 hover:bg-[#1C4F4A] transition cursor-pointer">Salvar</button>
-                {type === "patient" && (
-                    <div className="flex justify-center">
-                        <button 
-                            onClick={handleNext}
-                            className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer"
-                        >
-                            Editar Endereço
-                        </button>
-                    </div>
-                )}
                 <DialogClose className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer">Fechar</DialogClose>
 
             </div>
@@ -653,33 +520,22 @@ function ModalCreate ({user, type}: ModalProps){
         especiality,
         gender,
         is_master,
-        renderAddress,
-        renderDescription,
         formData,
-        handleNext,
-        handleBack,
         handleChange,
         handleImageChange,
         handleSelectChange,
         resetFormData,
-        resetAddressData
     } = useModal();
     
     useEffect(() => {
         resetFormData();
-        resetAddressData();
     }, []);
 
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl ">
             <DialogHeader className="flex-shrink-0">
                 <DialogTitle className="text-white text-center p-2 hover:bg-[#1C4F4A]">Criar {type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
-                <ModalAddress 
-                    user={user} 
-                    modalType='create' 
-                    address={user?.address || null} 
-                />
-                <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar flex-col" style={{ display: renderDescription }}>
+                <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar flex-col">
                     <div className="flex flex-col items-center gap-2">
                         <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
                             <AvatarImage src={preview} alt="Preview" />
@@ -757,18 +613,8 @@ function ModalCreate ({user, type}: ModalProps){
                     )}
 
                     <div className="w-full flex justify-center pt-4 gap-3">
-                        <button className=" bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer hover:bg-[#1C4F4A]" style={{ display: type === "patient" ? "none" : "flex" }}> Criar </button>
+                        <button className=" bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer hover:bg-[#1C4F4A]"> Criar </button>
                         <DialogClose className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer text-base">Fechar</DialogClose>
-                        {type === "patient" && (
-                            <div className="flex justify-center">
-                                <button 
-                                    onClick={handleNext}
-                                    className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer"
-                                >
-                                    Próximo
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </DialogDescription>
             </DialogHeader>
@@ -799,67 +645,6 @@ function ModalDelete({ user, type }: ModalProps) {
         </DialogHeader>
 
         </DialogContent>
-    );
-}
-
-function ModalAddress({ user, address, modalType }: { user: User | null, address: Address | null, modalType: ModalType }) {
-
-    const {
-        renderAddress,
-        addressFormData,
-        handleAddressChange,
-        handleBack
-    } = useModal();
-
-    let disabledInput;
-    if (!user && modalType !== "create") return null;
-
-    if (modalType === "edit" || modalType === "create") {
-        disabledInput = false;
-    } else if (modalType === "view") {
-        disabledInput = true;
-    }
-
-    return (
-        <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar flex-col" style={{ display: renderAddress }}>
-            <div className="flex items-center text-lg w-full justify-center">
-                {modalType === "view" ? "Endereço do Paciente" : modalType === "edit" ? "Editar Endereço do Paciente" : "Informe o endereço do Paciente"}
-            </div>
-            <div className="flex flex-col gap-3">
-                <InputField name="country" label="País" value={addressFormData.country} disabled={disabledInput} onChange={handleAddressChange} placeholder={!disabledInput? "Informe o país" : ""}/>
-                <InputField name="state" label="Estado" value={addressFormData.state} disabled={disabledInput} onChange={handleAddressChange} placeholder={!disabledInput? "Informe o estado" : ""}/>
-                <InputField name="city" label="Cidade" value={addressFormData.city} disabled={disabledInput} onChange={handleAddressChange} placeholder={!disabledInput? "Informe a cidade" : ""}/>
-                <InputField name="street" label="Rua" value={addressFormData.street} disabled={disabledInput} onChange={handleAddressChange} placeholder={!disabledInput? "Informe a rua" : ""}/>
-                <InputField name="neighborhood" label="Bairro" value={addressFormData.neighborhood} disabled={disabledInput} onChange={handleAddressChange} placeholder={!disabledInput? "Informe o bairro" : ""}/>
-                <div className="flex gap-3">
-                    <InputField name="postal_code" label="CEP" value={addressFormData.postal_code} disabled={disabledInput} onChange={handleAddressChange} placeholder={!disabledInput? "Informe o CEP" : ""}/>
-                    <InputField name="number" label="Número" value={addressFormData.number} disabled={disabledInput} onChange={handleAddressChange} placeholder={!disabledInput? "Informe o número" : ""}/>
-                </div>
-            </div>
-            <div className="w-full flex justify-center pt-4 gap-3">
-                <button 
-                    onClick={handleBack} 
-                    className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer"
-                > 
-                    Voltar
-                </button>
-                {modalType === "edit" && (
-                    <button 
-                        className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 hover:bg-[#1C4F4A] transition cursor-pointer"
-                    > 
-                        Salvar Endereço
-                    </button>
-                )}
-                {modalType === "create" && (
-                    <button 
-                        className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 hover:bg-[#1C4F4A] transition cursor-pointer"
-                    > 
-                        Criar
-                    </button>
-                )}
-                <DialogClose className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer text-base">Fechar</DialogClose>
-            </div>
-        </DialogDescription>
     );
 }
 
@@ -1004,7 +789,6 @@ function ModalAppointment({ receptionist, patients, doctors }: { receptionist: U
                                 </div>
                             )}
                         </div>
-                        <InputField name="observations" label="Observações" isTextArea={true} value={appointmentFormData.observations} onChange={handleAppointmentChange} placeholder="Digite as observações" />
                     </div>
                     <div className="w-full flex justify-center pt-4 gap-3">
                         <button
