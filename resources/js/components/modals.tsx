@@ -42,13 +42,15 @@ const validateUserData = (formData: any, type: string, isEdit: boolean = false, 
         errors.push("Telefone deve ter no máximo 20 caracteres");
     }
     
-    if (!isEdit) {
+    if (!isEdit && type !== "patient") {
         if (!formData.password || formData.password.trim() === '') {
             errors.push("Senha é obrigatória");
         } else if (formData.password.length < 6) {
             errors.push("Senha deve ter pelo menos 6 caracteres");
         }
-        
+    }
+    
+    if (!isEdit) {
         if (!formData.birth_date) {
             errors.push("Data de nascimento é obrigatória");
         }
@@ -108,7 +110,7 @@ interface User {
     photo: string | undefined;
     is_master?: string
     medical_history?: string
-    birth_date?: Date
+    birth_date?: Date | string
     emergency_contact?: string
     gender?: string
     crm?: string
@@ -448,7 +450,13 @@ function ModalView({ user, type }: ModalProps)  {
                     <InputField label="CPF" icon={<FontAwesomeIcon icon={faIdCard} />} value={user.cpf} disabled />
                     <InputField label="Telefone" icon={<FontAwesomeIcon icon={faPhone} />} value={user.phone} disabled />
                 </div>
-                <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toLocaleDateString() ?? ""} disabled />
+                <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={
+                    user.birth_date 
+                        ? (typeof user.birth_date === 'string' 
+                            ? new Date(user.birth_date).toLocaleDateString() 
+                            : user.birth_date.toLocaleDateString())
+                        : ""
+                } disabled />
 
                 { type=="doctor" && (
                 <div className="flex gap-3">
@@ -564,6 +572,12 @@ function ModalEdit({ user, type }: ModalProps) {
             submitFormData.append('phone', formData.phone);
             submitFormData.append('_method', 'PUT');
 
+            if (type === 'patient') {
+                submitFormData.append('medical_history', formData.medical_history || '');
+                submitFormData.append('emergency_contact', formData.emergency_contact || '');
+                submitFormData.append('gender', formData.gender || '');
+            }
+
             if (fileInputRef.current?.files?.[0]) {
                 submitFormData.append('photo', fileInputRef.current.files[0]);
             }
@@ -580,7 +594,7 @@ function ModalEdit({ user, type }: ModalProps) {
                     updateUrl = `/admin/receptionists/${user.id}`;
                     break;
                 case 'patient':
-                    updateUrl = `/admin/patients/${user.id}`;
+                    updateUrl = `/receptionist/patients/${user.id}`;
                     break;
                 default:
                     throw new Error('Tipo de usuário inválido');
@@ -691,8 +705,8 @@ function ModalEdit({ user, type }: ModalProps) {
                         value={gender}
                         onChange={handleSelectChange}
                         options={[
-                        { label: "Feminino", value: "fem" },
-                        { label: "Masculino", value: "masc" },
+                        { label: "Feminino", value: "female" },
+                        { label: "Masculino", value: "male" },
                         { label: "Outro", value: "other" },
                         ]}
                     />
@@ -709,15 +723,15 @@ function ModalEdit({ user, type }: ModalProps) {
 
             <div className="w-full flex justify-center pt-4 gap-3">
             <button 
-                    onClick={(type === "admin" || type === "doctor" || type === "receptionist") ? handleSave : undefined}
-                    disabled={(type === "admin" || type === "doctor" || type === "receptionist") ? isSaving : false}
+                    onClick={(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") ? handleSave : undefined}
+                    disabled={(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") ? isSaving : false}
                     className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
-                        (type === "admin" || type === "doctor" || type === "receptionist") && isSaving 
+                        (type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") && isSaving 
                             ? 'bg-gray-400 cursor-not-allowed' 
                             : 'bg-[#030D29] hover:bg-[#1C4F4A]'
                     }`}
                 >
-                    {(type === "admin" || type === "doctor" || type === "receptionist") && isSaving ? 'Salvando...' : 'Salvar'}
+                    {(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") && isSaving ? 'Salvando...' : 'Salvar'}
                 </button>
                 <DialogClose className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer">Fechar</DialogClose>
             </div>
@@ -768,8 +782,11 @@ function ModalCreate ({user, type}: ModalProps){
             submitFormData.append('email', formData.email);
             submitFormData.append('cpf', formData.cpf);
             submitFormData.append('phone', formData.phone);
-            submitFormData.append('password', formData.password);
             submitFormData.append('birth_date', formData.birth_date);
+
+            if (type !== "patient") {
+                submitFormData.append('password', formData.password);
+            }
 
             if (type === "admin") {
             submitFormData.append('is_master', formData.is_master);
@@ -805,7 +822,7 @@ function ModalCreate ({user, type}: ModalProps){
                 createUrl = '/admin/receptionists';
                 break;
             case 'patient':
-                createUrl = '/admin/patients';
+                createUrl = '/receptionist/patients';
                 break;
             default:
                 throw new Error('Tipo de usuário inválido');
@@ -889,7 +906,9 @@ function ModalCreate ({user, type}: ModalProps){
                     </div>
                     <InputField name="name" label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={formData.name} placeholder="Digite o nome" onChange={handleChange} />
                     <InputField name="email" label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} value={formData.email} placeholder="Digite o e-mail" onChange={handleChange} />
-                    <InputField name="password" label="Senha" type="password" icon={<FontAwesomeIcon icon={faKey} />} value={formData.password} placeholder="Digite a senha" onChange={handleChange} />
+                    {type !== "patient" && (
+                        <InputField name="password" label="Senha" type="password" icon={<FontAwesomeIcon icon={faKey} />} value={formData.password} placeholder="Digite a senha" onChange={handleChange} />
+                    )}
                     <div className="flex gap-3">
                         <InputField name="phone" label="Telefone" icon={<FontAwesomeIcon icon={faPhone} />} value={formData.phone} 
                         placeholder="Digite o telefone" onChange={handleChange} />
@@ -899,20 +918,17 @@ function ModalCreate ({user, type}: ModalProps){
 
                     {type === "patient" && (
                         <div className="flex flex-col gap-3">
-                            <div className="flex gap-3">
-                                <SelectField
-                                    name="gender"
-                                    label="Gênero"
-                                    options={[
-                                        { label: "Feminino", value: "fem" },
-                                        { label: "Masculino", value: "masc" },
-                                        { label: "Outro", value: "other" },
-                                    ]}
-                                    onChange={handleSelectChange}
-                                    value={gender}
-                                />
-                                <InputField name="birth_date" label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={formData.birth_date} type="date" onChange={handleChange} />
-                            </div>
+                            <SelectField
+                                name="gender"
+                                label="Gênero"
+                                options={[
+                                    { label: "Feminino", value: "female" },
+                                    { label: "Masculino", value: "male" },
+                                    { label: "Outro", value: "other" },
+                                ]}
+                                onChange={handleSelectChange}
+                                value={gender}
+                            />
                             <InputField name="emergency_contact" label="Contato de Emergência" icon={<FontAwesomeIcon icon={faCommentMedical} />} value={formData.emergency_contact} placeholder="Digite o contato de emergência" onChange={handleChange} />
                             <InputField name="medical_history" label="Histórico Médico" value={formData.medical_history} isTextArea={true} placeholder="Digite o histórico médico" onChange={handleChange} />
                         </div>
@@ -945,16 +961,15 @@ function ModalCreate ({user, type}: ModalProps){
 
                     <div className="w-full flex justify-center pt-4 gap-3">
                         <button 
-                            onClick={(type === "admin" || type === "doctor" || type === "receptionist") ? handleCreate : undefined}
-                            disabled={(type === "admin" || type === "doctor" || type === "receptionist") ? isCreating : false}
+                            onClick={(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") ? handleCreate : undefined}
+                            disabled={(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") ? isCreating : false}
                             className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
-                                (type === "admin" || type === "doctor" || type === "receptionist") && isCreating 
+                                (type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") && isCreating 
                                     ? 'bg-gray-400 cursor-not-allowed' 
                                     : 'bg-[#030D29] hover:bg-[#1C4F4A]'
-                            }`} 
-                            style={{ display: type === "patient" ? "none" : "flex" }}
+                            }`}
                         > 
-                            {(type === "admin" || type === "doctor" || type === "receptionist") && isCreating ? "Criando..." : "Criar"}
+                            {(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") && isCreating ? "Criando..." : "Criar"}
                         </button>
                         <DialogClose className="bg-[#030D29] text-white px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer text-base">Fechar</DialogClose>
                     </div>
@@ -988,7 +1003,7 @@ function ModalDelete({ user, type }: ModalProps) {
                     deleteUrl = `/admin/receptionists/${user.id}`;
                     break;
                 case 'patient':
-                    deleteUrl = `/admin/patients/${user.id}`;
+                    deleteUrl = `/receptionist/patients/${user.id}`;
                     break;
                 default:
                     throw new Error('Tipo de usuário inválido');
