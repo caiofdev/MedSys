@@ -26,7 +26,50 @@ class PatientController extends Controller
 
     public function store(Request $request)
     {
-        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:patients,email',
+            'cpf' => 'required|string|max:14|unique:patients,cpf',
+            'phone' => 'required|string|max:20',
+            'gender' => 'required|in:male,female,other',
+            'birth_date' => 'required|date',
+            'emergency_contact' => 'required|string|max:20',
+            'medical_history' => 'nullable|string',
+        ]);
+
+        try {
+            $patient = Patient::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'cpf' => $validated['cpf'],
+                'phone' => $validated['phone'],
+                'gender' => $validated['gender'],
+                'birth_date' => $validated['birth_date'],
+                'emergency_contact' => $validated['emergency_contact'],
+                'medical_history' => $validated['medical_history'] ?? '',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Paciente criado com sucesso.',
+                'patient' => [
+                    'id' => $patient->id,
+                    'name' => $patient->name,
+                    'email' => $patient->email,
+                    'cpf' => $patient->cpf,
+                    'phone' => $patient->phone,
+                    'gender' => $patient->gender,
+                    'birth_date' => $patient->birth_date,
+                    'emergency_contact' => $patient->emergency_contact,
+                    'medical_history' => $patient->medical_history,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao criar paciente: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function show(Patient $patient)

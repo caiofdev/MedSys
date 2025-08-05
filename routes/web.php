@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('admin/receptionists/{receptionist}', [ReceptionistController::class, 'destroy'])->name('receptionist.destroy')->middleware('user.type:admin');
 
     Route::get('receptionist/patients/{patient}', [PatientController::class, 'show'])->name('patient.show')->middleware('user.type:receptionist');
+    Route::post('receptionist/patients', [PatientController::class, 'store'])->name('patient.store')->middleware('user.type:receptionist');
     Route::put('receptionist/patients/{patient}', [PatientController::class, 'update'])->name('patient.update')->middleware('user.type:receptionist');
     Route::delete('receptionist/patients/{patient}', [PatientController::class, 'destroy'])->name('patient.destroy')->middleware('user.type:receptionist');
 
