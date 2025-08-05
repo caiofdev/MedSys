@@ -14,10 +14,11 @@ interface User {
     is_master?: string
     photo: string | undefined;
     medical_history?: string
-    birth_date?: Date
+    birth_date?: Date | string
     emergency_contact?: string
     gender?: string 
-
+    crm?: string
+    register_number?: string
 }
 
 type UserRole = "admin" | "receptionist" | "doctor" | "patient";
@@ -31,10 +32,57 @@ export default function Table({ users, type}: TableProps) {
     const [open, setOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [operation, setOperation] = useState<"view" | "edit" | "delete" | "create" | null>(null);
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
-    const handleAction = (user: User | null, action: "view" | "edit" | "delete" | "create") => {
-        setSelectedUser(user);
+    const handleAction = async (user: User | null, action: "view" | "edit" | "delete" | "create") => {
         setOperation(action);
+        
+        if (action === "view" && user) {
+            setIsLoadingDetails(true);
+            try {
+                let detailsUrl = '';
+                switch (type) {
+                    case 'admin':
+                        detailsUrl = `/admin/admins/${user.id}`;
+                        break;
+                    case 'doctor':
+                        detailsUrl = `/admin/doctors/${user.id}`;
+                        break;
+                    case 'receptionist':
+                        detailsUrl = `/admin/receptionists/${user.id}`;
+                        break;
+                    case 'patient':
+                        detailsUrl = `/receptionist/patients/${user.id}`;
+                        break;
+                    default:
+                        throw new Error('Tipo de usuário inválido');
+                }
+
+                const response = await fetch(detailsUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                    },
+                });
+
+                if (response.ok) {
+                    const detailedUser = await response.json();
+                    setSelectedUser(detailedUser);
+                } else {
+                    console.error('Erro ao buscar detalhes do usuário');
+                    setSelectedUser(user);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar detalhes:', error);
+                setSelectedUser(user);
+            } finally {
+                setIsLoadingDetails(false);
+            }
+        } else {
+            setSelectedUser(user);
+        }
+        
         setOpen(true);
     };
 

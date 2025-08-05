@@ -108,7 +108,7 @@ interface User {
     photo: string | undefined;
     is_master?: string
     medical_history?: string
-    birth_date?: Date
+    birth_date?: Date | string
     emergency_contact?: string
     gender?: string
     crm?: string
@@ -346,6 +346,12 @@ function ModalProvider({ children }: { children: ReactNode }) {
                 ? (user.is_master ? "yes" : "no")
                 : (user.is_master || "Selecione a opção")
         );
+        
+        console.log('FormData set to:', {
+            emergency_contact: user.emergency_contact,
+            medical_history: user.medical_history,
+            gender: user.gender
+        }); // Debug log
     };
     
     const resetAppointmentData = () => {
@@ -448,7 +454,13 @@ function ModalView({ user, type }: ModalProps)  {
                     <InputField label="CPF" icon={<FontAwesomeIcon icon={faIdCard} />} value={user.cpf} disabled />
                     <InputField label="Telefone" icon={<FontAwesomeIcon icon={faPhone} />} value={user.phone} disabled />
                 </div>
-                <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={user.birth_date?.toLocaleDateString() ?? ""} disabled />
+                <InputField label="Data de Nascimento" icon={<FontAwesomeIcon icon={faCalendar} />} value={
+                    user.birth_date 
+                        ? (typeof user.birth_date === 'string' 
+                            ? new Date(user.birth_date).toLocaleDateString() 
+                            : user.birth_date.toLocaleDateString())
+                        : ""
+                } disabled />
 
                 { type=="doctor" && (
                 <div className="flex gap-3">
@@ -564,6 +576,12 @@ function ModalEdit({ user, type }: ModalProps) {
             submitFormData.append('phone', formData.phone);
             submitFormData.append('_method', 'PUT');
 
+            if (type === 'patient') {
+                submitFormData.append('medical_history', formData.medical_history || '');
+                submitFormData.append('emergency_contact', formData.emergency_contact || '');
+                submitFormData.append('gender', formData.gender || '');
+            }
+
             if (fileInputRef.current?.files?.[0]) {
                 submitFormData.append('photo', fileInputRef.current.files[0]);
             }
@@ -580,7 +598,7 @@ function ModalEdit({ user, type }: ModalProps) {
                     updateUrl = `/admin/receptionists/${user.id}`;
                     break;
                 case 'patient':
-                    updateUrl = `/admin/patients/${user.id}`;
+                    updateUrl = `/receptionist/patients/${user.id}`;
                     break;
                 default:
                     throw new Error('Tipo de usuário inválido');
@@ -691,8 +709,8 @@ function ModalEdit({ user, type }: ModalProps) {
                         value={gender}
                         onChange={handleSelectChange}
                         options={[
-                        { label: "Feminino", value: "fem" },
-                        { label: "Masculino", value: "masc" },
+                        { label: "Feminino", value: "female" },
+                        { label: "Masculino", value: "male" },
                         { label: "Outro", value: "other" },
                         ]}
                     />
@@ -709,15 +727,15 @@ function ModalEdit({ user, type }: ModalProps) {
 
             <div className="w-full flex justify-center pt-4 gap-3">
             <button 
-                    onClick={(type === "admin" || type === "doctor" || type === "receptionist") ? handleSave : undefined}
-                    disabled={(type === "admin" || type === "doctor" || type === "receptionist") ? isSaving : false}
+                    onClick={(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") ? handleSave : undefined}
+                    disabled={(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") ? isSaving : false}
                     className={`text-white text-base px-5 py-1 rounded hover:scale-105 transition cursor-pointer ${
-                        (type === "admin" || type === "doctor" || type === "receptionist") && isSaving 
+                        (type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") && isSaving 
                             ? 'bg-gray-400 cursor-not-allowed' 
                             : 'bg-[#030D29] hover:bg-[#1C4F4A]'
                     }`}
                 >
-                    {(type === "admin" || type === "doctor" || type === "receptionist") && isSaving ? 'Salvando...' : 'Salvar'}
+                    {(type === "admin" || type === "doctor" || type === "receptionist" || type === "patient") && isSaving ? 'Salvando...' : 'Salvar'}
                 </button>
                 <DialogClose className="bg-[#030D29] text-white text-base px-5 py-1 rounded hover:scale-105 hover:bg-[#7A2E2E] transition cursor-pointer">Fechar</DialogClose>
             </div>
@@ -904,8 +922,8 @@ function ModalCreate ({user, type}: ModalProps){
                                     name="gender"
                                     label="Gênero"
                                     options={[
-                                        { label: "Feminino", value: "fem" },
-                                        { label: "Masculino", value: "masc" },
+                                        { label: "Feminino", value: "female" },
+                                        { label: "Masculino", value: "male" },
                                         { label: "Outro", value: "other" },
                                     ]}
                                     onChange={handleSelectChange}
