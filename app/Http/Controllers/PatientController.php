@@ -90,6 +90,18 @@ class PatientController extends Controller
 
     public function destroy(Patient $patient)
     {
-        
+        try {
+            $patient->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Paciente deletado com sucesso.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao deletar paciente: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

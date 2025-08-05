@@ -346,12 +346,6 @@ function ModalProvider({ children }: { children: ReactNode }) {
                 ? (user.is_master ? "yes" : "no")
                 : (user.is_master || "Selecione a opção")
         );
-        
-        console.log('FormData set to:', {
-            emergency_contact: user.emergency_contact,
-            medical_history: user.medical_history,
-            gender: user.gender
-        }); // Debug log
     };
     
     const resetAppointmentData = () => {
@@ -1006,7 +1000,7 @@ function ModalDelete({ user, type }: ModalProps) {
                     deleteUrl = `/admin/receptionists/${user.id}`;
                     break;
                 case 'patient':
-                    deleteUrl = `/admin/patients/${user.id}`;
+                    deleteUrl = `/receptionist/patients/${user.id}`;
                     break;
                 default:
                     throw new Error('Tipo de usuário inválido');
