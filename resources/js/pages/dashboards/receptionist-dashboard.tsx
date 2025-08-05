@@ -8,6 +8,9 @@ import DashboardProfile from '@/components/dashboard-user-profile';
 import DashboardCalendar from '@/components/dashboard-calendar';
 import DashboardMonthlySales from '@/components/dashboard-monthly-sales';
 import DashboardSummary from '@/components/dashboard-summary';
+import { ModalAppointment, ModalProvider } from '@/components/modals';
+import {Dialog} from "@/components/ui/dialog"
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -18,10 +21,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface ReceptionistDashboardProps {
     user: {
+        id: number;
+        cpf: string;
+        photo: string;
         name: string;
         avatar: string;
         role: string;
         registration_number: string;
+        email: string;
+        phone: string;
     };
     daily_summary: {
         appointments_today: number;
@@ -33,6 +41,7 @@ interface ReceptionistDashboardProps {
 }
 
 export default function ReceptionistDashboard({ user, daily_summary, weekly_appointments }: ReceptionistDashboardProps) {
+    const [open, setOpen] = useState(false);
     return (
     <AppLayout breadcrumbs={breadcrumbs} userRole="receptionist">
         <Head title="Recepcionist Dashboard" />
@@ -49,12 +58,13 @@ export default function ReceptionistDashboard({ user, daily_summary, weekly_appo
                                 color="F46248"
                                 route="/receptionist/patients"
                             />
-                            <DashboardCard 
-                                icon={faCalendar} 
-                                title={"Agendar Consulta"} 
-                                color="F46248"
-                                route="/"
-                            />
+                            <div onClick={() => setOpen(true)} className="cursor-pointer">
+                                <DashboardCard 
+                                    icon={faCalendar} 
+                                    title={"Agendar Consulta"} 
+                                    color="F46248"
+                                />
+                            </div>
                             <DashboardCard 
                                 icon={faFileMedical} 
                                 title={"Visualizar Consultas"} 
@@ -72,6 +82,21 @@ export default function ReceptionistDashboard({ user, daily_summary, weekly_appo
                     </div>
                 </div>
             </div>
+            <ModalProvider>
+                <Dialog open={open} onOpenChange={setOpen} >
+                    <ModalAppointment
+                        receptionist={user}
+                        patients={[
+                            { id: 1, name: 'João Silva', cpf: '123.456.789-00', email: 'joao.silva@example.com', photo: '', phone: '123-456-7890' },
+                            { id: 2, name: 'Maria Oliveira', cpf: '987.654.321-00', email: 'maria.oliveira@example.com', photo: '', phone: '987-654-3210' },
+                        ]}
+                        doctors={[
+                            { id: 1, name: 'Dr. Carlos', cpf: '123.456.789-00', crm: '123456', email: 'dr.carlos@example.com', photo: '', phone: '123-456-7890' },
+                            { id: 2, name: 'Dra. Ana', cpf: '987.654.321-00', crm: '654321', email: 'dra.ana@example.com', photo: '', phone: '987-654-3210' },
+                        ]}
+                    />
+                </Dialog>
+        </ModalProvider>
         </AppLayout>
     );
 }
