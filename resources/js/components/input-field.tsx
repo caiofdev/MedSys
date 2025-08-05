@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 interface InputFieldProps {
     label: string;
     icon?: ReactNode;
-    value: string;
+    value: string | number;
     name?: string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     isTextArea?: boolean;

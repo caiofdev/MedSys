@@ -46,7 +46,7 @@ export default function DoctorDashboard({ user, appointments, upcoming_appointme
                                 icon={faCirclePlay} 
                                 title="Iniciar Atendimento"
                                 color="198754"
-                                route="/"
+                                route="/doctor/start-consultation"
                             />
                             <DashboardCard 
                                 icon={faClipboard} 

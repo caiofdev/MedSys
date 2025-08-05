@@ -164,4 +164,9 @@ class DoctorController extends Controller
             ], 500);
         }
     }
+
+    public function startConsultation()
+    {
+        return Inertia::render('doctors/start-consultation');
+    }
 }

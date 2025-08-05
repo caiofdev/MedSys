@@ -6,13 +6,13 @@ type DashboardCardProps = {
     icon: IconDefinition,
     title: string,
     color: string,
-    route: string,
+    route?: string,
 };
 
 export default function DashboardCard( { icon, title, color, route }: DashboardCardProps ) {
     return (
         <div 
-            onClick={() => router.visit(route)}
+            onClick={() => route && router.visit(route)}
             className=" flex flex-col overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border h-full justify-center items-center gap-3 cursor-pointer hover:shadow-2xl hover:scale-102" style={{ backgroundColor: '#F7F2EB' }}
         >
             <div className='flex flex-col justify-center items-center'>
