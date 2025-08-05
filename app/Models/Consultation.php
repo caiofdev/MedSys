@@ -20,14 +20,4 @@ class Consultation extends Model
     {
         return $this->belongsTo(Appointment::class);
     }
-
-    public function prescriptions()
-    {
-        return $this->hasMany(Prescription::class);
-    }
-
-    public function exams()
-    {
-        return $this->hasMany(Exam::class);
-    }
 }

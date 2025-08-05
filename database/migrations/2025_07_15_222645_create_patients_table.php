@@ -22,8 +22,6 @@ return new class extends Migration
             $table->string('emergency_contact');
             $table->text('medical_history')->nullable();
             $table->timestamps();
-
-            $table->foreignId('address_id')->constrained('addresses')->onDelete('cascade');
         });
     }
 

@@ -14,8 +14,6 @@ class DatabaseSeeder extends Seeder
             DoctorSeeder::class,
             PatientSeeder::class,
             ConsultationSeeder::class,
-            PrescriptionSeeder::class,
-            ExamSeeder::class,
         ]);
     }
 }
