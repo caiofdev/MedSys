@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\ReceptionistController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\AppointmentController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -44,6 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('receptionist/patients/{patient}', [PatientController::class, 'destroy'])->name('patient.destroy')->middleware('user.type:receptionist');
 
     Route::get('doctor/start-consultation', [DoctorController::class, 'startConsultation'])->name('doctor.start-consultation')->middleware('user.type:doctor');
+
+    Route::post('receptionist/appointments', [AppointmentController::class, 'store'])->name('appointment.store')->middleware('user.type:receptionist');
+    Route::get('receptionist/appointments/patients', [AppointmentController::class, 'getPatients'])->name('appointment.patients')->middleware('user.type:receptionist');
+    Route::get('receptionist/appointments/doctors', [AppointmentController::class, 'getDoctors'])->name('appointment.doctors')->middleware('user.type:receptionist');
 });
 
 require __DIR__.'/settings.php';

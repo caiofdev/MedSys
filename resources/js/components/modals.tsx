@@ -186,6 +186,9 @@ interface ModalContextType {
     handleDoctorSelect: (doctor: User) => void;
     handleCreateAppointment: () => void;
 
+    searchPatients: (query: string) => Promise<void>;
+    searchDoctors: (query: string) => Promise<void>;
+
     resetFormData: () => void;
     resetAppointmentData: () => void;
     initializeEditMode: (user: User) => void;
@@ -295,10 +298,85 @@ function ModalProvider({ children }: { children: ReactNode }) {
         setFilteredDoctors([]);
     };
 
-    const handleCreateAppointment = () => {
-        // #TODO: Implementar lógica de criação de consulta
-        alert(`Consulta agendada para ${appointmentFormData.patient?.name} com ${appointmentFormData.doctor?.name}`);
-        resetAppointmentData();
+    const handleCreateAppointment = async () => {
+        if (!appointmentFormData.patient?.id || !appointmentFormData.doctor?.id || !appointmentFormData.date || !appointmentFormData.time || appointmentFormData.price <= 0) {
+            alert('Por favor, preencha todos os campos obrigatórios');
+            return;
+        }
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            if (!csrfToken) {
+                alert('Token CSRF não encontrado');
+                return;
+            }
+
+            const response = await fetch('/receptionist/appointments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({
+                    patient_id: appointmentFormData.patient.id,
+                    doctor_id: appointmentFormData.doctor.id,
+                    date: appointmentFormData.date,
+                    time: appointmentFormData.time,
+                    price: appointmentFormData.price,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                alert(`Consulta agendada com sucesso para ${appointmentFormData.patient.name} com ${appointmentFormData.doctor.name}`);
+                resetAppointmentData();
+                // Recarregar a página ou atualizar a lista de consultas
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao agendar consulta');
+            }
+        } catch (error) {
+            console.error('Erro ao agendar consulta:', error);
+            alert('Erro ao agendar consulta. Tente novamente.');
+        }
+    };
+
+    const searchPatients = async (query: string) => {
+        if (!query.trim()) {
+            setFilteredPatients([]);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/receptionist/appointments/patients?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                setFilteredPatients(data.patients);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar pacientes:', error);
+        }
+    };
+
+    const searchDoctors = async (query: string) => {
+        if (!query.trim()) {
+            setFilteredDoctors([]);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/receptionist/appointments/doctors?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                setFilteredDoctors(data.doctors);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar médicos:', error);
+        }
     };
     
     const resetFormData = () => {
@@ -401,6 +479,9 @@ function ModalProvider({ children }: { children: ReactNode }) {
         handlePatientSelect,
         handleDoctorSelect,
         handleCreateAppointment,
+        
+        searchPatients,
+        searchDoctors,
         
         resetFormData,
         resetAppointmentData,
@@ -600,7 +681,6 @@ function ModalEdit({ user, type }: ModalProps) {
                     throw new Error('Tipo de usuário inválido');
             }
 
-            // Pegar o token CSRF do meta tag
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
             if (!csrfToken) {
@@ -1082,7 +1162,9 @@ function ModalAppointment({ receptionist, patients, doctors }: { receptionist: U
         handlePatientSelect,
         handleDoctorSelect,
         handleCreateAppointment,
-        resetAppointmentData
+        resetAppointmentData,
+        searchPatients,
+        searchDoctors,
     } = useModal();
 
     const formatPrice = (price: number): string => {
@@ -1103,30 +1185,6 @@ function ModalAppointment({ receptionist, patients, doctors }: { receptionist: U
         resetAppointmentData();
     }, []);
 
-    useEffect(() => {
-        if (searchQuery.trim() === "") {
-            setFilteredPatients([]);
-        } else {
-            setFilteredPatients(
-                patients.filter(p =>
-                    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-            );
-        }
-    }, [searchQuery, patients]);
-
-    useEffect(() => {
-        if (doctorQuery.trim() === "") {
-            setFilteredDoctors([]);
-        } else {
-            setFilteredDoctors(
-                doctors.filter(d =>
-                    d.name.toLowerCase().includes(doctorQuery.toLowerCase())
-                )
-            );
-        }
-    }, [doctorQuery, doctors]);
-
     if (!receptionist) return null;
 
     return (
@@ -1141,8 +1199,10 @@ function ModalAppointment({ receptionist, patients, doctors }: { receptionist: U
                                 label="Paciente"
                                 value={searchQuery}
                                 onChange={e => {
-                                    setSearchQuery(e.target.value);
+                                    const value = e.target.value;
+                                    setSearchQuery(value);
                                     setSelectedPatient(null);
+                                    searchPatients(value);
                                 }}
                                 placeholder="Busque pelo nome do paciente"
                             />
@@ -1166,8 +1226,10 @@ function ModalAppointment({ receptionist, patients, doctors }: { receptionist: U
                                 label="Doutor"
                                 value={doctorQuery}
                                 onChange={e => {
-                                    setDoctorQuery(e.target.value);
+                                    const value = e.target.value;
+                                    setDoctorQuery(value);
                                     setSelectedDoctor(null);
+                                    searchDoctors(value);
                                 }}
                                 placeholder="Busque pelo nome do doutor"
                             />
