@@ -18,7 +18,6 @@ class PatientFactory extends Factory
             'birth_date' => $this->faker->date(),
             'emergency_contact' => $this->faker->phoneNumber(),
             'medical_history' => $this->faker->text(200),
-            'address_id' => Address::factory(),
         ];
     }
 }

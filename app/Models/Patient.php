@@ -21,11 +21,6 @@ class Patient extends Model
         'address_id',
     ];
 
-    public function address()
-    {
-        return $this->belongsTo(Address::class);
-    }
-
     public function appointments()
     {
         return $this->hasMany(Appointment::class);
