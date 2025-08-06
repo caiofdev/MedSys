@@ -23,7 +23,8 @@ class DoctorController extends Controller
             'doctors' => $doctors,
             'filters' => [
                 'search' => $search,
-            ]
+            ],
+            'userRole' => 'admin'
         ]);
     }
 
@@ -64,25 +65,9 @@ class DoctorController extends Controller
                 'crm' => $validated['crm'],
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Médico criado com sucesso.',
-                'doctor' => [
-                    'id' => $doctor->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'cpf' => $user->cpf,
-                    'phone' => $user->phone,
-                    'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
-                    'birth_date' => $user->birth_date,
-                    'crm' => $doctor->crm,
-                ]
-            ]);
+            return back()->with('success', 'Médico criado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao criar médico: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao criar médico: ' . $e->getMessage()]);
         }
     }
 
@@ -130,18 +115,7 @@ class DoctorController extends Controller
 
         $doctor->user->update($updateData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Médico atualizado com sucesso.',
-            'doctor' => [
-                'id' => $doctor->id,
-                'name' => $doctor->user->name,
-                'email' => $doctor->user->email,
-                'phone' => $doctor->user->phone,
-                'photo' => $doctor->user->photo ? asset('storage/' . $doctor->user->photo) : null,
-                'crm' => $doctor->crm,
-            ]
-        ]);
+        return back()->with('success', 'Médico atualizado com sucesso.');
     }
 
     public function destroy(Doctor $doctor)
@@ -153,20 +127,90 @@ class DoctorController extends Controller
 
             $doctor->user->delete();
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Médico deletado com sucesso.'
-            ]);
+            return back()->with('success', 'Médico deletado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao deletar médico: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao deletar médico: ' . $e->getMessage()]);
         }
     }
 
     public function startConsultation()
     {
-        return Inertia::render('doctors/start-consultation');
+        $user = auth()->user();
+        $doctor = $user->doctor;
+        
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->withErrors(['message' => 'Acesso negado.']);
+        }
+
+        $appointments = \App\Models\Appointment::with(['patient'])
+            ->where('doctor_id', $doctor->id)
+            ->where('status', 'scheduled')
+            ->whereDate('appointment_date', '>=', now()->toDateString())
+            ->orderBy('appointment_date', 'asc')
+            ->get();
+
+        $patients = \App\Models\Patient::whereHas('appointments', function ($query) use ($doctor) {
+            $query->where('doctor_id', $doctor->id);
+        })
+        ->select('id', 'name', 'email', 'cpf', 'phone', 'birth_date', 'gender', 'emergency_contact', 'medical_history')
+        ->orderBy('name', 'asc')
+        ->get();
+
+        return Inertia::render('doctors/start-consultation', [
+            'appointments' => $appointments,
+            'patients' => $patients,
+            'userRole' => 'doctor'
+        ]);
+    }
+
+    public function finishConsultation(Request $request)
+    {
+        $validated = $request->validate([
+            'appointment_id' => 'required|exists:appointments,id',
+            'symptoms' => 'required|string',
+            'diagnosis' => 'required|string',
+            'notes' => 'nullable|string',
+        ], [
+            'appointment_id.required' => 'ID do agendamento é obrigatório.',
+            'appointment_id.exists' => 'Agendamento não encontrado.',
+            'symptoms.required' => 'Sintomas são obrigatórios.',
+            'diagnosis.required' => 'Diagnóstico é obrigatório.',
+        ]);
+
+        try {
+            $user = auth()->user();
+            $doctor = $user->doctor;
+            
+            if (!$doctor) {
+                return back()->withErrors(['message' => 'Acesso negado.']);
+            }
+
+            // Verificar se o appointment pertence ao médico logado
+            $appointment = \App\Models\Appointment::where('id', $validated['appointment_id'])
+                ->where('doctor_id', $doctor->id)
+                ->first();
+
+            if (!$appointment) {
+                return back()->withErrors(['message' => 'Agendamento não encontrado ou não pertence a este médico.']);
+            }
+
+            // Criar a consulta
+            $consultation = \App\Models\Consultation::create([
+                'appointment_id' => $appointment->id,
+                'symptoms' => $validated['symptoms'],
+                'diagnosis' => $validated['diagnosis'],
+                'notes' => $validated['notes'] ?? '',
+            ]);
+
+            // Atualizar o status do appointment para 'completed'
+            $appointment->update(['status' => 'completed']);
+
+            return back()->with('success', 'Consulta finalizada com sucesso!');
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao finalizar consulta', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            
+            return back()->withErrors(['message' => 'Erro interno do servidor. Tente novamente.']);
+        }
     }
 }

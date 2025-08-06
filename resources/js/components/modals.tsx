@@ -7,6 +7,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import InputError from "./input-error";
+import { router } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 
 
 const validateUserData = (formData: any, type: string, isEdit: boolean = false, fileInput?: HTMLInputElement | null) => {
@@ -233,6 +235,26 @@ function ModalProvider({ children }: { children: ReactNode }) {
     const [doctorQuery, setDoctorQuery] = useState("");
     const [filteredDoctors, setFilteredDoctors] = useState<User[]>([]);
     const [selectedDoctor, setSelectedDoctor] = useState<User | null>(null);
+
+    // Verificar se o token CSRF está disponível quando o componente é montado
+    useEffect(() => {
+        const checkCsrfToken = () => {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!token) {
+                console.error('CSRF token não encontrado no carregamento inicial');
+                // Tentar aguardar um pouco e verificar novamente
+                setTimeout(() => {
+                    const retryToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    if (!retryToken) {
+                        console.error('CSRF token ainda não está disponível após delay');
+                    }
+                }, 1000);
+            }
+        };
+
+        // Verificar imediatamente e após um delay
+        checkCsrfToken();
+    }, []);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -300,50 +322,55 @@ function ModalProvider({ children }: { children: ReactNode }) {
         setFilteredDoctors([]);
     };
 
-    const handleCreateAppointment = async () => {
+    const handleCreateAppointment = () => {
         
         if (!appointmentFormData.patient?.id || !appointmentFormData.doctor?.id || !appointmentFormData.date || !appointmentFormData.time || appointmentFormData.price <= 0) {
             alert('Por favor, preencha todos os campos obrigatórios');
             return;
         }
 
-        try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            
-            if (!csrfToken) {
-                alert('Token CSRF não encontrado');
-                return;
-            }
+        console.log('Enviando dados para agendamento via Inertia...');
+        console.log('Dados:', {
+            patient_id: appointmentFormData.patient.id,
+            doctor_id: appointmentFormData.doctor.id,
+            date: appointmentFormData.date,
+            time: appointmentFormData.time,
+            price: appointmentFormData.price,
+            status: appointmentFormData.status || 'scheduled',
+        });
 
-            const response = await fetch('/receptionist/appointments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-                body: JSON.stringify({
-                    patient_id: appointmentFormData.patient.id,
-                    doctor_id: appointmentFormData.doctor.id,
-                    date: appointmentFormData.date,
-                    time: appointmentFormData.time,
-                    price: appointmentFormData.price,
-                    status: appointmentFormData.status || 'scheduled',
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
+        router.post('/receptionist/appointments', {
+            patient_id: appointmentFormData.patient.id,
+            doctor_id: appointmentFormData.doctor.id,
+            date: appointmentFormData.date,
+            time: appointmentFormData.time,
+            price: appointmentFormData.price,
+            status: appointmentFormData.status || 'scheduled',
+        }, {
+            onSuccess: (page) => {
+                console.log('Sucesso:', page);
                 alert(`Consulta agendada com sucesso para ${appointmentFormData.patient.name} com ${appointmentFormData.doctor.name}`);
                 resetAppointmentData();
                 window.location.reload();
-            } else {
-                alert(data.message || 'Erro ao agendar consulta');
+            },
+            onError: (errors) => {
+                console.error('Erro:', errors);
+                
+                // Verifica se há uma mensagem de erro específica
+                if (errors.message) {
+                    alert(errors.message);
+                } else if (Object.keys(errors).length > 0) {
+                    // Pega o primeiro erro disponível
+                    const firstError = Object.values(errors)[0];
+                    alert(Array.isArray(firstError) ? firstError[0] : firstError);
+                } else {
+                    alert('Erro ao agendar consulta. Tente novamente.');
+                }
+            },
+            onFinish: () => {
+                console.log('Requisição finalizada');
             }
-        } catch (error) {
-            console.error('Erro ao agendar consulta:', error);
-            alert('Erro ao agendar consulta. Tente novamente.');
-        }
+        });
     };
 
     const searchPatients = async (query: string) => {
@@ -353,11 +380,19 @@ function ModalProvider({ children }: { children: ReactNode }) {
         }
 
         try {
-            const response = await fetch(`/receptionist/appointments/patients?q=${encodeURIComponent(query)}`);
-            const data = await response.json();
-            
-            if (data.success) {
-                setFilteredPatients(data.patients);
+            const response = await fetch(`/receptionist/appointments/patients?q=${encodeURIComponent(query)}`, {
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setFilteredPatients(data.patients);
+                }
+            } else {
+                console.error('Erro ao buscar pacientes:', response.status);
             }
         } catch (error) {
             console.error('Erro ao buscar pacientes:', error);
@@ -371,11 +406,19 @@ function ModalProvider({ children }: { children: ReactNode }) {
         }
 
         try {
-            const response = await fetch(`/receptionist/appointments/doctors?q=${encodeURIComponent(query)}`);
-            const data = await response.json();
-            
-            if (data.success) {
-                setFilteredDoctors(data.doctors);
+            const response = await fetch(`/receptionist/appointments/doctors?q=${encodeURIComponent(query)}`, {
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setFilteredDoctors(data.doctors);
+                }
+            } else {
+                console.error('Erro ao buscar médicos:', response.status);
             }
         } catch (error) {
             console.error('Erro ao buscar médicos:', error);
@@ -423,7 +466,10 @@ function ModalProvider({ children }: { children: ReactNode }) {
         });
         
         setPreview(user.photo || "");
-        setGender(user.gender || "Selecione o gênero");
+        
+        // Sincronizar o estado gender com formData.gender para compatibilidade
+        setGender(user.gender || "");
+        
         setIsMaster(
             typeof user.is_master === 'boolean' 
                 ? (user.is_master ? "yes" : "no")
@@ -517,18 +563,20 @@ function ModalView({ user, type }: ModalProps)  {
             <DialogDescription className=" flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar">
             {user ? (
                 <>
-                <div className="flex justify-center">
-                    <Avatar className="h-22 w-22 rounded-full border-2 border-[#9FA3AE]">
-                    <AvatarImage 
-                        src={user.photo} 
-                        alt={user.name} 
-                        className="object-cover w-full h-full rounded-full"
-                    />
-                    <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
-                        {getInitials(user.name)}
-                    </AvatarFallback>
-                    </Avatar>
-                </div>
+                    {type !== "patient" && (
+                        <div className="flex justify-center">
+                            <Avatar className="h-22 w-22 rounded-full border-2 border-[#9FA3AE]">
+                                <AvatarImage
+                                    src={user.photo}
+                                    alt={user.name}
+                                    className="object-cover w-full h-full rounded-full"
+                                />
+                                <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
+                                    {getInitials(user.name)}
+                                </AvatarFallback>
+                            </Avatar>
+                        </div>
+                    )}
                 <InputField label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={user.name} disabled />
                 <InputField label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} value={user.email} disabled />
                 <div className="flex gap-3">
@@ -577,7 +625,7 @@ function ModalView({ user, type }: ModalProps)  {
                 { type=="patient" && (
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-3">
-                            <InputField label="Gênero" icon={""} value={user.gender ?? ""} disabled />
+                            <InputField label="Gênero" icon={""} value={user.gender === 'male' ? 'Masculino' : 'Feminino'} disabled />
                         </div>
                             <InputField
                                 label="Contato de Emergência"
@@ -636,7 +684,7 @@ function ModalEdit({ user, type }: ModalProps) {
         setErrorMessage("");
     }, [user]);
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!user || isSaving) return;
 
         setErrorMessage("");
@@ -650,94 +698,81 @@ function ModalEdit({ user, type }: ModalProps) {
 
         setIsSaving(true);
 
-        try {
-            const submitFormData = new FormData();
-            submitFormData.append('name', formData.name);
-            submitFormData.append('email', formData.email);
-            submitFormData.append('phone', formData.phone);
-            submitFormData.append('_method', 'PUT');
+        const submitData: Record<string, any> = {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            _method: 'PUT',
+        };
 
-            if (type === 'patient') {
-                submitFormData.append('medical_history', formData.medical_history || '');
-                submitFormData.append('emergency_contact', formData.emergency_contact || '');
-                submitFormData.append('gender', formData.gender || '');
+        if (type === 'patient') {
+            if (formData.medical_history !== undefined) {
+            submitData.medical_history = formData.medical_history;
             }
-
-            if (fileInputRef.current?.files?.[0]) {
-                submitFormData.append('photo', fileInputRef.current.files[0]);
+            if (formData.emergency_contact !== undefined) {
+            submitData.emergency_contact = formData.emergency_contact;
             }
-
-            let updateUrl = '';
-            switch (type) {
-                case 'admin':
-                    updateUrl = `/admin/admins/${user.id}`;
-                    break;
-                case 'doctor':
-                    updateUrl = `/admin/doctors/${user.id}`;
-                    break;
-                case 'receptionist':
-                    updateUrl = `/admin/receptionists/${user.id}`;
-                    break;
-                case 'patient':
-                    updateUrl = `/receptionist/patients/${user.id}`;
-                    break;
-                default:
-                    throw new Error('Tipo de usuário inválido');
+            if (formData.gender !== undefined) {
+            submitData.gender = formData.gender;
             }
-
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            
-            if (!csrfToken) {
-                throw new Error('Token CSRF não encontrado');
-            }
-
-            const response = await fetch(updateUrl, {
-                method: 'POST', 
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-                body: submitFormData,
-            });
-
-            const contentType = response.headers.get('content-type');
-            
-            if (!response.ok) {
-                if (response.status === 419) {
-                    setErrorMessage('Sessão expirada. Recarregue a página e tente novamente.');
-                    return;
-                }
-                
-                if (contentType && contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    setErrorMessage(errorData.message || 'Erro ao atualizar usuário');
-                } else {
-                    setErrorMessage('Erro no servidor. Tente novamente.');
-                }
-                return;
-            }
-
-            if (contentType && contentType.includes('application/json')) {
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    setErrorMessage(data.message || 'Erro ao atualizar usuário');
-                }
-            } else {
-                window.location.reload();
-            }
-
-        } catch (error) {
-            console.error('Erro ao salvar:', error);
-            if (error instanceof SyntaxError) {
-                setErrorMessage('Erro de comunicação com o servidor. Sessão pode ter expirado.');
-            } else {
-                setErrorMessage('Erro ao salvar as alterações. Tente novamente.');
-            }
-        } finally {
-            setIsSaving(false);
         }
+
+        if (type === 'admin' && formData.is_master !== undefined) {
+            submitData.is_master = formData.is_master;
+        }
+
+        if (type === 'doctor' && formData.crm !== undefined) {
+            submitData.crm = formData.crm;
+        }
+
+        if (type === 'receptionist' && formData.register_number !== undefined) {
+            submitData.register_number = formData.register_number;
+        }
+
+        if (fileInputRef.current?.files?.[0]) {
+            submitData.photo = fileInputRef.current.files[0];
+        }
+
+        let updateUrl = '';
+        switch (type) {
+            case 'admin':
+                updateUrl = `/admin/admins/${user.id}`;
+                break;
+            case 'doctor':
+                updateUrl = `/admin/doctors/${user.id}`;
+                break;
+            case 'receptionist':
+                updateUrl = `/admin/receptionists/${user.id}`;
+                break;
+            case 'patient':
+                updateUrl = `/receptionist/patients/${user.id}`;
+                break;
+            default:
+                setErrorMessage('Tipo de usuário inválido');
+                setIsSaving(false);
+                return;
+        }
+
+        router.post(updateUrl, submitData, {
+            onSuccess: () => {
+                window.location.reload();
+            },
+            onError: (errors) => {
+                console.error('Erro:', errors);
+                
+                if (errors.message) {
+                    setErrorMessage(errors.message);
+                } else if (Object.keys(errors).length > 0) {
+                    const firstError = Object.values(errors)[0];
+                    setErrorMessage(Array.isArray(firstError) ? firstError[0] : firstError);
+                } else {
+                    setErrorMessage('Erro ao atualizar usuário. Tente novamente.');
+                }
+            },
+            onFinish: () => {
+                setIsSaving(false);
+            }
+        });
     };
 
 
@@ -747,28 +782,30 @@ function ModalEdit({ user, type }: ModalProps) {
             <DialogTitle className="text-white text-center p-2">Editar {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
             
             <DialogDescription className="flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar">
-            <div className="flex flex-col items-center gap-2">
-                <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
-                    <AvatarImage 
-                        src={preview} 
-                        alt={user.name} 
-                        className="object-cover w-full h-full rounded-full"
-                    />
-                    <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
-                        {getInitials(user.name)}
-                    </AvatarFallback>
-                </Avatar>
-                <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
-                    Editar Foto
-                    <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleImageChange} 
-                        className="hidden" 
-                    />
-                </label>
-            </div>
+            {type !== "patient" && (
+                <div className="flex flex-col items-center gap-2">
+                    <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
+                        <AvatarImage 
+                            src={preview} 
+                            alt={user.name} 
+                            className="object-cover w-full h-full rounded-full"
+                        />
+                        <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
+                            {getInitials(user.name)}
+                        </AvatarFallback>
+                    </Avatar>
+                    <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
+                        Editar Foto
+                        <input 
+                            ref={fileInputRef}
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleImageChange} 
+                            className="hidden" 
+                        />
+                    </label>
+                </div>
+            )}
 
             <InputField label="Nome" icon={<FontAwesomeIcon icon={faUser} />} name="name" value={formData.name} onChange={handleChange} />
             <InputField label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} name="email" value={formData.email} onChange={handleChange} />
@@ -780,13 +817,13 @@ function ModalEdit({ user, type }: ModalProps) {
                         label="Contato de Emergência"
                         icon={<FontAwesomeIcon icon={faCommentMedical} />}
                         name="emergency_contact"
-                        value={formData.emergency_contact ?? ""}
+                        value={formData.emergency_contact}
                         onChange={handleChange}
                     />
                     <SelectField
                         label="Gênero"
                         name="gender"
-                        value={gender}
+                        value={formData.gender}
                         onChange={handleSelectChange}
                         options={[
                         { label: "Feminino", value: "female" },
@@ -846,7 +883,7 @@ function ModalCreate ({user, type}: ModalProps){
         setErrorMessage("");
     }, []);
 
-    const handleCreate = async () => {
+    const handleCreate = () => {
         if (isCreating) return;
         
         setErrorMessage("");
@@ -860,38 +897,38 @@ function ModalCreate ({user, type}: ModalProps){
 
         setIsCreating(true);
 
-        try {
-            const submitFormData = new FormData();
-            submitFormData.append('name', formData.name);
-            submitFormData.append('email', formData.email);
-            submitFormData.append('cpf', formData.cpf);
-            submitFormData.append('phone', formData.phone);
-            submitFormData.append('birth_date', formData.birth_date);
+        const submitData: Record<string, any> = {
+            name: formData.name,
+            email: formData.email,
+            cpf: formData.cpf,
+            phone: formData.phone,
+            birth_date: formData.birth_date,
+        };
 
-            if (type !== "patient") {
-                submitFormData.append('password', formData.password);
-            }
+        if (type !== "patient") {
+            submitData.password = formData.password;
+        }
 
-            if (type === "admin") {
-            submitFormData.append('is_master', formData.is_master);
+        if (type === "admin") {
+            submitData.is_master = formData.is_master;
         }
 
         if (type === "doctor") {
-            submitFormData.append('crm', formData.crm);
+            submitData.crm = formData.crm;
         }
 
         if (type === "receptionist") {
-            submitFormData.append('register_number', formData.register_number);
+            submitData.register_number = formData.register_number;
         }
 
         if (type === "patient") {
-            submitFormData.append('gender', formData.gender);
-            submitFormData.append('emergency_contact', formData.emergency_contact);
-            submitFormData.append('medical_history', formData.medical_history);
+            submitData.gender = formData.gender;
+            submitData.emergency_contact = formData.emergency_contact;
+            submitData.medical_history = formData.medical_history;
         }
 
         if (fileInputRef.current?.files?.[0]) {
-            submitFormData.append('photo', fileInputRef.current.files[0]);
+            submitData.photo = fileInputRef.current.files[0];
         }
 
         let createUrl = '';
@@ -909,68 +946,44 @@ function ModalCreate ({user, type}: ModalProps){
                 createUrl = '/receptionist/patients';
                 break;
             default:
-                throw new Error('Tipo de usuário inválido');
-        }
-
-        const response = await fetch(createUrl, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-            },
-            body: submitFormData,
-        });
-
-        const contentType = response.headers.get('content-type');
-        
-        if (!response.ok) {
-            if (response.status === 419) {
-                setErrorMessage('Sessão expirada. Recarregue a página e tente novamente.');
+                setErrorMessage('Tipo de usuário inválido');
+                setIsCreating(false);
                 return;
-            }
-            
-            if (contentType && contentType.includes('application/json')) {
-                const errorData = await response.json();
-                setErrorMessage(errorData.message || 'Erro ao criar usuário');
-            } else {
-                setErrorMessage('Erro no servidor. Tente novamente.');
-            }
-            return;
         }
 
-        if (contentType && contentType.includes('application/json')) {
-            const data = await response.json();
-            
-            if (data.success) {
+        router.post(createUrl, submitData, {
+            onSuccess: () => {
                 window.location.reload();
-            } else {
-                setErrorMessage(data.message || 'Erro ao criar usuário');
+            },
+            onError: (errors) => {
+                console.error('Erro:', errors);
+                
+                if (errors.message) {
+                    setErrorMessage(errors.message);
+                } else if (Object.keys(errors).length > 0) {
+                    const firstError = Object.values(errors)[0];
+                    setErrorMessage(Array.isArray(firstError) ? firstError[0] : firstError);
+                } else {
+                    setErrorMessage('Erro ao criar usuário. Tente novamente.');
+                }
+            },
+            onFinish: () => {
+                setIsCreating(false);
             }
-        } else {
-            window.location.reload();
-        }
-
-    } catch (error) {
-        console.error('Erro ao criar:', error);
-        if (error instanceof SyntaxError) {
-            setErrorMessage('Erro de comunicação com o servidor. Sessão pode ter expirado.');
-        } else {
-            setErrorMessage('Erro ao criar usuário. Verifique os dados e tente novamente.');
-        }
-    } finally {
-        setIsCreating(false);
-    }
-};
+        });
+    };
 
     return (
         <DialogContent className="bg-[#030D29] p-0 pt-3 rounded-2xl ">
             <DialogHeader className="flex-shrink-0">
                 <DialogTitle className="text-white text-center p-2">Criar {type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
                 <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar flex-col">
-                    <div className="flex flex-col items-center gap-2">
-                        <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
-                            <AvatarImage 
-                                src={preview} 
-                                alt="Preview" 
+                    {type !== "patient" && (
+                        <div className="flex flex-col items-center gap-2">
+                            <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
+                                <AvatarImage
+                                    src={preview}
+                                    alt="Preview"
                                 className="object-cover w-full h-full rounded-full"
                             />
                             <AvatarFallback className="bg-gray-200 text-gray-600 flex items-center justify-center">
@@ -987,7 +1000,8 @@ function ModalCreate ({user, type}: ModalProps){
                                 className="hidden" 
                             />
                         </label>
-                    </div>
+                        </div>
+                    )}
                     <InputField name="name" label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={formData.name} placeholder="Digite o nome" onChange={handleChange} />
                     <InputField name="email" label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} value={formData.email} placeholder="Digite o e-mail" onChange={handleChange} />
                     {type !== "patient" && (
@@ -1068,52 +1082,51 @@ function ModalDelete({ user, type }: ModalProps) {
 
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
         if (!user || isDeleting) return;
 
         setIsDeleting(true);
 
-        try {
-            // Determinar a rota correta baseada no tipo
-            let deleteUrl = '';
-            switch (type) {
-                case 'admin':
-                    deleteUrl = `/admin/admins/${user.id}`;
-                    break;
-                case 'doctor':
-                    deleteUrl = `/admin/doctors/${user.id}`;
-                    break;
-                case 'receptionist':
-                    deleteUrl = `/admin/receptionists/${user.id}`;
-                    break;
-                case 'patient':
-                    deleteUrl = `/receptionist/patients/${user.id}`;
-                    break;
-                default:
-                    throw new Error('Tipo de usuário inválido');
-            }
-
-            const response = await fetch(deleteUrl, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-                },
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message || 'Erro ao deletar usuário');
-            }
-        } catch (error) {
-            console.error('Erro ao deletar:', error);
-            alert('Erro ao deletar usuário');
-        } finally {
-            setIsDeleting(false);
+        let deleteUrl = '';
+        switch (type) {
+            case 'admin':
+                deleteUrl = `/admin/admins/${user.id}`;
+                break;
+            case 'doctor':
+                deleteUrl = `/admin/doctors/${user.id}`;
+                break;
+            case 'receptionist':
+                deleteUrl = `/admin/receptionists/${user.id}`;
+                break;
+            case 'patient':
+                deleteUrl = `/receptionist/patients/${user.id}`;
+                break;
+            default:
+                alert('Tipo de usuário inválido');
+                setIsDeleting(false);
+                return;
         }
+
+        router.delete(deleteUrl, {
+            onSuccess: () => {
+                window.location.reload();
+            },
+            onError: (errors) => {
+                console.error('Erro:', errors);
+                
+                if (errors.message) {
+                    alert(errors.message);
+                } else if (Object.keys(errors).length > 0) {
+                    const firstError = Object.values(errors)[0];
+                    alert(Array.isArray(firstError) ? firstError[0] : firstError);
+                } else {
+                    alert('Erro ao deletar usuário');
+                }
+            },
+            onFinish: () => {
+                setIsDeleting(false);
+            }
+        });
     };
 
     return (

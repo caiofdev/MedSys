@@ -39,9 +39,10 @@ interface PatientTableProps {
     filters: {
         search: string;
     };
+    userRole: 'admin' | 'doctor' | 'receptionist' | 'patient';
 }
 
-export default function PatientTable({ patients, filters }: PatientTableProps) {
+export default function PatientTable({ patients, filters, userRole }: PatientTableProps) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
 
     const tableData = patients.data.map(patient => ({
@@ -50,6 +51,10 @@ export default function PatientTable({ patients, filters }: PatientTableProps) {
         email: patient.email,
         phone: patient.phone,
         cpf: patient.cpf,
+        gender: patient.gender,
+        birth_date: patient.birth_date,
+        emergency_contact: patient.emergency_contact,
+        medical_history: patient.medical_history,
         photo: undefined
     }));
 
@@ -71,7 +76,7 @@ export default function PatientTable({ patients, filters }: PatientTableProps) {
     }, [searchTerm]);
 
     return(
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} userRole={userRole}>
             <Head title="Patient Table" />
             <div className="flex flex-col space-y-6 justify-center mt-5">
                 <div className='flex flex-row justify-between ml-30 mr-30'>

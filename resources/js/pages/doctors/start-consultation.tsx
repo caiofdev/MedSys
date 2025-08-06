@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,7 @@ interface Appointment {
     id: number;
     appointment_date: string;
     status: string;
-    value: number;
+    value: number | string;
     patient: Patient;
 }
 
@@ -55,73 +55,14 @@ interface ConsultationData {
 interface StartConsultationProps {
     appointments: Appointment[];
     patients: Patient[];
+    userRole: 'admin' | 'doctor' | 'receptionist' | 'patient';
+    flash?: {
+        success?: string;
+        error?: string;
+    };
 }
 
-const thisAppointments: Appointment[] = [
-    {
-        id: 1,
-        appointment_date: '2023-10-01T10:00:00Z',
-        status: 'scheduled',
-        value: 150.00,
-        patient: {
-            id: 1,
-            name: 'João Silva',
-            email: 'joao.silva@example.com',
-            cpf: '123.456.789-00',
-            phone: '(11) 98765-4321',
-            birth_date: '1990-01-01',
-            gender: 'masculino',
-            emergency_contact: '(11) 91234-5678',
-            medical_history: 'Hipertensão',
-            avatar: 'https://ui-avatars.com/api/?name=João+Silva',
-        },
-    },
-    {
-        id: 2,
-        appointment_date: '2023-10-01T11:00:00Z',
-        status: 'scheduled',
-        value: 200.00,
-        patient: {
-            id: 2,
-            name: 'Maria Oliveira',
-            email: 'maria.oliveira@example.com',
-            cpf: '987.654.321-00',
-            phone: '(11) 91234-5678',
-            birth_date: '1995-05-05',
-            gender: 'feminino',
-            emergency_contact: '(11) 99876-5432',
-            medical_history: 'Diabetes',
-            avatar: 'https://ui-avatars.com/api/?name=Maria+Oliveira',
-        },
-    },
-];
 
-const thisPatients: Patient[] = [
-    {
-        id: 1,
-        name: 'João Silva',
-        email: 'joao@email.com',
-        cpf: '123.456.789-00',
-        phone: '(11) 98765-4321',
-        birth_date: '1990-01-01',
-        gender: 'masculino',
-        emergency_contact: '(11) 91234-5678',
-        medical_history: 'Hipertensão',
-        avatar: 'https://ui-avatars.com/api/?name=João+Silva',
-    },
-    {
-        id: 2,
-        name: 'Maria Oliveira',
-        email: 'maria@email.com',
-        cpf: '987.654.321-00',
-        phone: '(11) 91234-5678',
-        birth_date: '1995-05-05',
-        gender: 'feminino',
-        emergency_contact: '(11) 99876-5432',
-        medical_history: 'Diabetes',
-        avatar: 'https://ui-avatars.com/api/?name=Maria+Oliveira',
-    },
-];
 
 function Timer() {
     const [time, setTime] = useState(0);
@@ -189,20 +130,108 @@ function Timer() {
     );
 }
 
-    export default function StartConsultation({ appointments = thisAppointments, patients = thisPatients }: StartConsultationProps) {
+// Função utilitária para formatar valores monetários
+const formatCurrency = (value: number | string): string => {
+    const numValue = Number(value || 0);
+    return numValue.toFixed(2);
+};
+
+
+export default function StartConsultation({ appointments, patients, userRole, flash }: StartConsultationProps) {
+
     const [selectedPatient, setSelectedPatient] = useState<string>('');
     const [selectedAppointment, setSelectedAppointment] = useState<string>('');
     const [step, setStep] = useState(1);
+    const [showFlash, setShowFlash] = useState(true);
     const getInitials = useInitials();
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        appointment_id: '',
+        symptoms: '',
+        diagnosis: '',
+        notes: '',
+    });
 
     const selectedPatientData = patients.find(p => p.id === parseInt(selectedPatient));
     const selectedAppointmentData = appointments.find(a => a.id === parseInt(selectedAppointment));
 
+    // Atualizar appointment_id quando selectedAppointment mudar
+    useEffect(() => {
+        if (selectedAppointment) {
+            setData('appointment_id', selectedAppointment);
+        }
+    }, [selectedAppointment]);
+
+    // Reset form quando voltar ao step 1
+    useEffect(() => {
+        if (step === 1) {
+            reset();
+        }
+    }, [step]);
+
+    // Auto-esconder mensagens flash após 5 segundos
+    useEffect(() => {
+        if (flash?.success || flash?.error) {
+            setShowFlash(true);
+            const timer = setTimeout(() => {
+                setShowFlash(false);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash]);
+
+    const handleFinishConsultation = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        post(route('doctor.finish-consultation'), {
+            onSuccess: () => {
+                // A mensagem de sucesso virá do flash
+                setStep(1);
+                setSelectedPatient('');
+                setSelectedAppointment('');
+                reset();
+            },
+            onError: (errors) => {
+                console.error('Erro ao finalizar consulta:', errors);
+                // Os erros já são tratados automaticamente pelo Inertia
+            }
+        });
+    };
+
+    const handleBackToSelection = () => {
+        setStep(1);
+        reset();
+    };
+
     return (
-        <AppLayout breadcrumbs={breadcrumbs} userRole="doctor">
+        <AppLayout breadcrumbs={breadcrumbs} userRole={userRole}>
             <Head title="Iniciar Atendimento" />
             <div className="min-h-screen p-6">
                 <div className="max-w-7xl mx-auto space-y-8">
+                    {/* Mensagens Flash */}
+                    {showFlash && flash?.success && (
+                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center justify-between">
+                            <span>{flash.success}</span>
+                            <button 
+                                onClick={() => setShowFlash(false)}
+                                className="text-green-500 hover:text-green-700 ml-4"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+                    {showFlash && flash?.error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+                            <span>{flash.error}</span>
+                            <button 
+                                onClick={() => setShowFlash(false)}
+                                className="text-red-500 hover:text-red-700 ml-4"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+                    
                     {step === 1 && (
                         <div className="text-center space-y-4">
                             <div className="inline-flex items-center justify-center w-16 h-16 bg-[#030D29] rounded-full mb-4">
@@ -288,10 +317,10 @@ function Timer() {
                                                 options={[
                                                     { value: '', label: selectedPatient ? 'Selecione um agendamento' : 'Primeiro selecione um paciente' },
                                                     ...appointments
-                                                        .filter(apt => selectedPatient ? apt.patient.id === parseInt(selectedPatient) : true)
+                                                        .filter(apt => selectedPatient ? apt.patient.id === parseInt(selectedPatient) : false)
                                                         .map((appointment) => ({
                                                             value: String(appointment.id),
-                                                            label: `${new Date(appointment.appointment_date).toLocaleString('pt-BR')} - ${appointment.status}`,
+                                                            label: `${new Date(appointment.appointment_date).toLocaleString('pt-BR')} - R$ ${formatCurrency(appointment.value)}`,
                                                         }))
                                                 ]}
                                                 onChange={(e) => setSelectedAppointment(e.target.value)}
@@ -310,11 +339,11 @@ function Timer() {
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <FontAwesomeIcon icon={faCircleDot} className="text-[#030D29]" />
-                                                        <span><strong>Status:</strong> {selectedAppointmentData.status === 'completed' ? 'Concluído' : 'Agendado'}</span>
+                                                        <span><strong>Status:</strong> {selectedAppointmentData.status === 'completed' ? 'Concluído' : selectedAppointmentData.status === 'scheduled' ? 'Agendado' : 'Cancelado'}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <FontAwesomeIcon icon={faMoneyBill} className="text-[#030D29]" />
-                                                        <span><strong>Valor:</strong> R$ {selectedAppointmentData.value.toFixed(2)}</span>
+                                                        <span><strong>Valor:</strong> R$ {formatCurrency(selectedAppointmentData.value)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -344,7 +373,7 @@ function Timer() {
                                     <h2 className="text-3xl font-bold text-[#030D29]">Consulta em Andamento</h2>
                                 </div>
                                 <Button 
-                                    onClick={() => setStep(1)}
+                                    onClick={handleBackToSelection}
                                     variant="outline"
                                     className="border-2 text-[#030D29] hover:bg-[#F7F2EB]"
                                     style={{ borderColor: '#030D29' }}
@@ -428,50 +457,70 @@ function Timer() {
                                     </div>
                                 </div>
                                 <div className="p-8 space-y-8">
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        <div className="space-y-3">
-                                            <Label className="text-lg font-semibold text-[#030D29] flex items-center gap-2">
-                                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#030D29' }}></span>
-                                                Sintomas
-                                            </Label>
-                                            <textarea
-                                                placeholder="Descreva os sintomas relatados pelo paciente..."
-                                                className="w-full min-h-[120px] p-4 border-2 border-[#030d2934] rounded-lg focus:border-[#030D29] focus:ring-2 focus:ring-[#030d2920] transition-all duration-200 resize-none bg-white/70"
-                                            />
+                                    {errors.appointment_id && (
+                                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                                            {errors.appointment_id}
+                                        </div>
+                                    )}
+                                    <form onSubmit={handleFinishConsultation}>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                            <div className="space-y-3">
+                                                <Label className="text-lg font-semibold text-[#030D29] flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#030D29' }}></span>
+                                                    Sintomas
+                                                </Label>
+                                                <textarea
+                                                    placeholder="Descreva os sintomas relatados pelo paciente..."
+                                                    className="w-full min-h-[120px] p-4 border-2 border-[#030d2934] rounded-lg focus:border-[#030D29] focus:ring-2 focus:ring-[#030d2920] transition-all duration-200 resize-none bg-white/70"
+                                                    value={data.symptoms}
+                                                    onChange={(e) => setData('symptoms', e.target.value)}
+                                                    required
+                                                />
+                                                {errors.symptoms && <p className="text-red-500 text-sm">{errors.symptoms}</p>}
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <Label className="text-lg font-semibold text-[#030D29] flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#030D29' }}></span>
+                                                    Diagnóstico
+                                                </Label>
+                                                <textarea
+                                                    placeholder="Informe o diagnóstico ou suspeita diagnóstica..."
+                                                    className="w-full min-h-[120px] p-4 border-2 border-[#030d2934] rounded-lg focus:border-[#030D29] focus:ring-2 focus:ring-[#030d2920] transition-all duration-200 resize-none bg-white/70"
+                                                    value={data.diagnosis}
+                                                    onChange={(e) => setData('diagnosis', e.target.value)}
+                                                    required
+                                                />
+                                                {errors.diagnosis && <p className="text-red-500 text-sm">{errors.diagnosis}</p>}
+                                            </div>
                                         </div>
 
-                                        <div className="space-y-3">
+                                        <div className="space-y-3 mt-8">
                                             <Label className="text-lg font-semibold text-[#030D29] flex items-center gap-2">
                                                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#030D29' }}></span>
-                                                Diagnóstico
+                                                Notas e Observações
                                             </Label>
                                             <textarea
-                                                placeholder="Informe o diagnóstico ou suspeita diagnóstica..."
-                                                className="w-full min-h-[120px] p-4 border-2 border-[#030d2934] rounded-lg focus:border-[#030D29] focus:ring-2 focus:ring-[#030d2920] transition-all duration-200 resize-none bg-white/70"
+                                                placeholder="Adicione observações adicionais, prescrições, orientações, etc..."
+                                                className="w-full min-h-[150px] p-4 border-2 border-[#030d2934] rounded-lg focus:border-[#030D29] focus:ring-2 focus:ring-[#030d2920] transition-all duration-200 resize-none bg-white/70"
+                                                value={data.notes}
+                                                onChange={(e) => setData('notes', e.target.value)}
                                             />
+                                            {errors.notes && <p className="text-red-500 text-sm">{errors.notes}</p>}
                                         </div>
-                                    </div>
 
-                                    <div className="space-y-3">
-                                        <Label className="text-lg font-semibold text-[#030D29] flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#030D29' }}></span>
-                                            Notas e Observações
-                                        </Label>
-                                        <textarea
-                                            placeholder="Adicione observações adicionais, prescrições, orientações, etc..."
-                                            className="w-full min-h-[150px] p-4 border-2 border-[#030d2934] rounded-lg focus:border-[#030D29] focus:ring-2 focus:ring-[#030d2920] transition-all duration-200 resize-none bg-white/70"
-                                        />
-                                    </div>
-
-                                    <div className="flex gap-4 pt-6">
-                                        <Button 
-                                            className="flex-1 h-14 text-lg font-semibold text-white hover:opacity-90 transition-all duration-300 cursor-pointer"
-                                            style={{ backgroundColor: '#030D29' }}
-                                        >
-                                            <FontAwesomeIcon icon={faClipboard} className="mr-3" />
-                                            Finalizar Consulta
-                                        </Button>
-                                    </div>
+                                        <div className="flex gap-4 pt-6">
+                                            <Button 
+                                                type="submit"
+                                                disabled={processing}
+                                                className="flex-1 h-14 text-lg font-semibold text-white hover:opacity-90 transition-all duration-300 cursor-pointer disabled:opacity-50"
+                                                style={{ backgroundColor: '#030D29' }}
+                                            >
+                                                <FontAwesomeIcon icon={faClipboard} className="mr-3" />
+                                                {processing ? 'Finalizando...' : 'Finalizar Consulta'}
+                                            </Button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>

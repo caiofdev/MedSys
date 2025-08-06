@@ -23,7 +23,8 @@ class ReceptionistController extends Controller
             'receptionists' => $receptionists,
             'filters' => [
                 'search' => $search,
-            ]
+            ],
+            'userRole' => 'admin'
         ]);
     }
 
@@ -64,25 +65,9 @@ class ReceptionistController extends Controller
                 'registration_number' => $validated['register_number'],
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Recepcionista criado com sucesso.',
-                'receptionist' => [
-                    'id' => $receptionist->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'cpf' => $user->cpf,
-                    'phone' => $user->phone,
-                    'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
-                    'birth_date' => $user->birth_date,
-                    'register_number' => $receptionist->registration_number,
-                ]
-            ]);
+            return back()->with('success', 'Recepcionista criado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao criar recepcionista: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao criar recepcionista: ' . $e->getMessage()]);
         }
     }
 
@@ -130,18 +115,7 @@ class ReceptionistController extends Controller
 
         $receptionist->user->update($updateData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Recepcionista atualizado com sucesso.',
-            'receptionist' => [
-                'id' => $receptionist->id,
-                'name' => $receptionist->user->name,
-                'email' => $receptionist->user->email,
-                'phone' => $receptionist->user->phone,
-                'photo' => $receptionist->user->photo ? asset('storage/' . $receptionist->user->photo) : null,
-                'register_number' => $receptionist->registration_number,
-            ]
-        ]);
+        return back()->with('success', 'Recepcionista atualizado com sucesso.');
     }
 
     public function destroy(Receptionist $receptionist)
@@ -153,15 +127,9 @@ class ReceptionistController extends Controller
 
             $receptionist->user->delete();
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Recepcionista deletado com sucesso.'
-            ]);
+            return back()->with('success', 'Recepcionista deletado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao deletar recepcionista: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao deletar recepcionista: ' . $e->getMessage()]);
         }
     }
 }

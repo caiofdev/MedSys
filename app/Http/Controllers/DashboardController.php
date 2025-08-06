@@ -29,6 +29,29 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
+        // Buscar dados dos relatórios diretamente
+        $lastConsultationsData = $this->getLastFiveCompletedConsultations();
+        $monthlyRevenueData = $this->getMonthlyRevenue();
+        
+        // Preparar dados das últimas consultas para o gráfico
+        $consultationsChartData = [];
+        $consultationsLabels = [];
+        if (isset($lastConsultationsData['data'])) {
+            foreach ($lastConsultationsData['data'] as $consultation) {
+                $consultationsChartData[] = floatval($consultation['value']);
+                $consultationsLabels[] = 'Consulta ' . $consultation['id'];
+            }
+        }
+        
+        // Preparar dados de receita mensal
+        $monthlyRevenueValues = [];
+        if (isset($monthlyRevenueData['data'])) {
+            $monthlyRevenueValues = [
+                floatval($monthlyRevenueData['data']['previous_month']['revenue']),
+                floatval($monthlyRevenueData['data']['current_month']['revenue'])
+            ];
+        }
+        
         $dashboardData = [
             'user' => [
                 'name' => $user->name,
@@ -42,11 +65,25 @@ class DashboardController extends Controller
                 'total_receptionists' => \App\Models\Receptionist::count(),
                 'total_users' => \App\Models\User::count(),
             ],
-            'recent_activities' => [
+            'recent_activities' => [],
+            'completed_consultations' => [
+                'labels' => $consultationsLabels,
+                'data' => $consultationsChartData,
+                'total_value' => $lastConsultationsData['total_value'] ?? 0
+            ],
+            'monthly_revenue' => [
+                'current_month' => $monthlyRevenueData['data']['current_month'] ?? null,
+                'previous_month' => $monthlyRevenueData['data']['previous_month'] ?? null,
+                'comparison' => $monthlyRevenueData['data']['comparison'] ?? null,
+                'chart_data' => $monthlyRevenueValues,
+                'chart_labels' => [
+                    $monthlyRevenueData['data']['previous_month']['month_name'] ?? 'Mês Anterior',
+                    $monthlyRevenueData['data']['current_month']['month_name'] ?? 'Mês Atual'
+                ]
             ]
         ];
 
-        return Inertia::render('dashboards/admin-dashboard', $dashboardData);
+        return Inertia::render('dashboards/admin-dashboard', array_merge($dashboardData, ['userRole' => 'admin']));
     }
 
     public function doctorDashboard()
@@ -68,13 +105,13 @@ class DashboardController extends Controller
                 'month' => $doctor->appointments()->whereMonth('appointment_date', now()->month)->count(),
             ],
             'upcoming_appointments' => $doctor->appointments()
-                ->where('appointment_date', '>=', now())
+                ->whereBetween('appointment_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->with('patient')
                 ->orderBy('appointment_date')
-                ->limit(5)
                 ->get(),
         ];
 
-        return Inertia::render('dashboards/doctor-dashboard', $dashboardData);
+        return Inertia::render('dashboards/doctor-dashboard', array_merge($dashboardData, ['userRole' => 'doctor']));
     }
 
     public function receptionistDashboard()
@@ -96,10 +133,121 @@ class DashboardController extends Controller
                 'cancelled_today' => \App\Models\Appointment::whereDate('appointment_date', today())->where('status', 'canceled')->count(),
             ],
             'weekly_appointments' => \App\Models\Appointment::whereBetween('appointment_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->with(['patient', 'doctor.user'])
                 ->orderBy('appointment_date')
                 ->get(),
         ];
 
-        return Inertia::render('dashboards/receptionist-dashboard', $dashboardData);
+        return Inertia::render('dashboards/receptionist-dashboard', array_merge($dashboardData, ['userRole' => 'receptionist']));
+    }
+
+    /**
+     * Retorna os dados das cinco últimas consultas concluídas
+     */
+    private function getLastFiveCompletedConsultations()
+    {
+        $consultations = \App\Models\Consultation::with(['appointment' => function($query) {
+            $query->with(['doctor.user', 'patient'])
+                  ->where('status', 'completed');
+        }])
+        ->whereHas('appointment', function($query) {
+            $query->where('status', 'completed');
+        })
+        ->latest('created_at')
+        ->take(5)
+        ->get()
+        ->map(function($consultation) {
+            return [
+                'id' => $consultation->id,
+                'value' => $consultation->appointment->value,
+                'appointment_date' => $consultation->appointment->appointment_date,
+                'doctor_name' => $consultation->appointment->doctor->user->name,
+                'patient_name' => $consultation->appointment->patient->name,
+                'diagnosis' => $consultation->diagnosis,
+                'created_at' => $consultation->created_at,
+            ];
+        });
+
+        return [
+            'success' => true,
+            'data' => $consultations,
+            'total_value' => $consultations->sum('value')
+        ];
+    }
+
+    /**
+     * Retorna os dados da receita do mês atual e do mês anterior
+     */
+    private function getMonthlyRevenue()
+    {
+        $currentMonth = now()->startOfMonth();
+        $previousMonth = now()->subMonth()->startOfMonth();
+        $previousMonthEnd = now()->subMonth()->endOfMonth();
+
+        // Receita do mês atual
+        $currentMonthRevenue = \App\Models\Appointment::where('status', 'completed')
+            ->whereBetween('appointment_date', [$currentMonth, now()])
+            ->sum('value');
+
+        // Receita do mês anterior
+        $previousMonthRevenue = \App\Models\Appointment::where('status', 'completed')
+            ->whereBetween('appointment_date', [$previousMonth, $previousMonthEnd])
+            ->sum('value');
+
+        // Número de consultas concluídas por mês
+        $currentMonthConsultations = \App\Models\Appointment::where('status', 'completed')
+            ->whereBetween('appointment_date', [$currentMonth, now()])
+            ->count();
+
+        $previousMonthConsultations = \App\Models\Appointment::where('status', 'completed')
+            ->whereBetween('appointment_date', [$previousMonth, $previousMonthEnd])
+            ->count();
+
+        // Calculando a diferença percentual
+        $revenueGrowth = $previousMonthRevenue > 0 
+            ? (($currentMonthRevenue - $previousMonthRevenue) / $previousMonthRevenue) * 100 
+            : 0;
+
+        return [
+            'success' => true,
+            'data' => [
+                'current_month' => [
+                    'revenue' => $currentMonthRevenue,
+                    'consultations_count' => $currentMonthConsultations,
+                    'month_name' => $currentMonth->format('F Y'),
+                    'formatted_revenue' => 'R$ ' . number_format($currentMonthRevenue, 2, ',', '.')
+                ],
+                'previous_month' => [
+                    'revenue' => $previousMonthRevenue,
+                    'consultations_count' => $previousMonthConsultations,
+                    'month_name' => $previousMonth->format('F Y'),
+                    'formatted_revenue' => 'R$ ' . number_format($previousMonthRevenue, 2, ',', '.')
+                ],
+                'comparison' => [
+                    'revenue_difference' => $currentMonthRevenue - $previousMonthRevenue,
+                    'revenue_growth_percentage' => round($revenueGrowth, 2),
+                    'consultations_difference' => $currentMonthConsultations - $previousMonthConsultations,
+                    'formatted_difference' => 'R$ ' . number_format($currentMonthRevenue - $previousMonthRevenue, 2, ',', '.')
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Endpoint público para últimas consultas (para uso via AJAX se necessário)
+     */
+    public function getLastFiveCompletedConsultationsApi()
+    {
+        $data = $this->getLastFiveCompletedConsultations();
+        return response()->json($data);
+    }
+
+    /**
+     * Endpoint público para receita mensal (para uso via AJAX se necessário)
+     */
+    public function getMonthlyRevenueApi()
+    {
+        $data = $this->getMonthlyRevenue();
+        return response()->json($data);
     }
 }

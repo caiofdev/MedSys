@@ -44,9 +44,10 @@ interface DoctorTableProps {
     filters: {
         search: string;
     };
+    userRole: 'admin' | 'doctor' | 'receptionist' | 'patient';
 }
 
-export default function DoctorTable({ doctors, filters }: DoctorTableProps) {
+export default function DoctorTable({ doctors, filters, userRole }: DoctorTableProps) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
 
     const tableData = doctors.data.map(doctor => ({
@@ -78,7 +79,7 @@ export default function DoctorTable({ doctors, filters }: DoctorTableProps) {
     }, [searchTerm]);
 
     return(
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} userRole={userRole}>
             <Head title="Doctor Table" />
             <div className="flex flex-col space-y-6 justify-center mt-5">
                 <div className='flex flex-row justify-between ml-30 mr-30'>

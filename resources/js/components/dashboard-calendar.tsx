@@ -1,8 +1,23 @@
 import { useState } from "react";
 import DashboardAppointment from "./dashboard-appointment";
 
+type Appointment = {
+    id: number;
+    appointment_date: string;
+    patient: {
+        name: string;
+    };
+    doctor?: {
+        user: {
+            name: string;
+        };
+    };
+    status: string;
+}
+
 type DashboardCalendarProps = {
     title: string;
+    appointments?: Appointment[];
 }
 
 function getCurrentWeekDays() {
@@ -28,36 +43,21 @@ function getCurrentWeekDays() {
     return days;
 }
 
-const appointments = [
-    { appointment_date: new Date("2025-07-30T10:00:00"), title: "Consulta Luiza", color: "D63384" },
-    { appointment_date: new Date("2025-07-30T12:00:00"), title: "Consulta Vitor", color: "0D6EFD" },
-    { appointment_date: new Date("2025-08-01T16:00:00"), title: "Consulta Leticia", color: "FD7E14" },
-];
-
-const user = {
-    id: "1",
-    name: "Doctor",
-    appointments: appointments.map(app => ({
-        appointment_date: new Date(app.appointment_date),
-        title: app.title,
-        color: app.color
-    }))
-};
-
 function isSameDay(date1: Date, date2: Date): boolean {
     return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
 }
 
-export default function DashboardCalendar({ title }: DashboardCalendarProps) {
+export default function DashboardCalendar({ title, appointments = [] }: DashboardCalendarProps) {
     const weekDays = getCurrentWeekDays();
     const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
 
     const getAppointmentsForDay = (day: Date | null) => {
         if (!day) return [];
         
-        return user.appointments.filter(appointment => 
-            isSameDay(appointment.appointment_date, day)
-        );
+        return appointments.filter(appointment => {
+            const appointmentDate = new Date(appointment.appointment_date);
+            return isSameDay(appointmentDate, day);
+        });
     };
 
     const handleDayClick = (date: Date) => {
@@ -109,17 +109,29 @@ export default function DashboardCalendar({ title }: DashboardCalendarProps) {
                     
                     <div className='flex flex-col w-full h-full justify-self-start justify-center gap-0 rounded-b-2xl border-t-1 border-b-1 p-2' style={{ backgroundColor: '#F7F2EB' }}>
                         {appointmentsToShow.length > 0 ? (
-                            appointmentsToShow.map((appointment, index) => (
-                                <DashboardAppointment
-                                    key={index}
-                                    time={appointment.appointment_date.toLocaleTimeString('pt-BR', { 
-                                        hour: '2-digit', 
-                                        minute: '2-digit' 
-                                    })}
-                                    title={appointment.title}
-                                    color={appointment.color}
-                                />
-                            ))
+                            appointmentsToShow.map((appointment: Appointment, index: number) => {
+                                const appointmentDate = new Date(appointment.appointment_date);
+                                const colors = ['D63384', '0D6EFD', 'FFC107', 'FD7E14', '198754'];
+                                const color = colors[index % colors.length];
+                                
+                                // Para dashboard da recepcionista: mostrar paciente e doutor
+                                // Para dashboard do doutor: mostrar apenas paciente
+                                const title = appointment.doctor 
+                                    ? `${appointment.patient.name} - Dr. ${appointment.doctor.user.name}`
+                                    : `Consulta ${appointment.patient.name}`;
+                                
+                                return (
+                                    <DashboardAppointment
+                                        key={appointment.id}
+                                        time={appointmentDate.toLocaleTimeString('pt-BR', { 
+                                            hour: '2-digit', 
+                                            minute: '2-digit' 
+                                        })}
+                                        title={title}
+                                        color={color}
+                                    />
+                                );
+                            })
                         ) : (
                             <div className="flex justify-center items-center h-full">
                                 <p className="text-gray-500">Nenhuma consulta agendada para este dia</p>

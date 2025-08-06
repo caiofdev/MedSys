@@ -23,7 +23,8 @@ class AdminController extends Controller
             'admins' => $admins,
             'filters' => [
                 'search' => $search,
-            ]
+            ],
+            'userRole' => 'admin'
         ]);
     }
 
@@ -64,25 +65,9 @@ class AdminController extends Controller
                 'is_master' => $validated['is_master'] === 'yes',
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Administrador criado com sucesso.',
-                'admin' => [
-                    'id' => $admin->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'cpf' => $user->cpf,
-                    'phone' => $user->phone,
-                    'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
-                    'birth_date' => $user->birth_date,
-                    'is_master' => $admin->is_master,
-                ]
-            ]);
+            return back()->with('success', 'Administrador criado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao criar administrador: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao criar administrador: ' . $e->getMessage()]);
         }
     }
 
@@ -98,6 +83,7 @@ class AdminController extends Controller
             'phone' => $admin->user->phone,
             'photo' => $admin->user->photo ? asset('storage/' . $admin->user->photo) : null,
             'is_master' => $admin->is_master,
+            'birth_date' => $admin->user->birth_date,
         ]);
     }
 
@@ -129,17 +115,7 @@ class AdminController extends Controller
 
         $admin->user->update($updateData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Administrador atualizado com sucesso.',
-            'admin' => [
-                'id' => $admin->id,
-                'name' => $admin->user->name,
-                'email' => $admin->user->email,
-                'phone' => $admin->user->phone,
-                'photo' => $admin->user->photo ? asset('storage/' . $admin->user->photo) : null,
-            ]
-        ]);
+        return back()->with('success', 'Administrador atualizado com sucesso.');
     }
 
     public function destroy(Admin $admin)
@@ -147,25 +123,16 @@ class AdminController extends Controller
         if ($admin->is_master) {
             $masterCount = Admin::where('is_master', true)->count();
             if ($masterCount <= 1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Não é possível deletar o último administrador master do sistema.'
-                ], 400);
+                return back()->withErrors(['message' => 'Não é possível deletar o último administrador master do sistema.']);
             }
         }
 
         try {
             $admin->user->delete();
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Administrador deletado com sucesso.'
-            ]);
+            return back()->with('success', 'Administrador deletado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao deletar administrador: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao deletar administrador: ' . $e->getMessage()]);
         }
     }
 }

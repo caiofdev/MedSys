@@ -61,7 +61,7 @@ export default function DoctorDashboard({ user, appointments, upcoming_appointme
                                 route="/"
                             />
                         </div>
-                        <DashboardCalendar title='Meu Calendário'/>
+                        <DashboardCalendar title='Meu Calendário' appointments={upcoming_appointments}/>
                     </div>
                 </div>
             </div>

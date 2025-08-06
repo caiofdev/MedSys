@@ -28,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('admin/admins', [AdminController::class, 'store'])->name('admin.store')->middleware('user.type:admin');
     Route::put('admin/admins/{admin}', [AdminController::class, 'update'])->name('admin.update')->middleware('user.type:admin');
     Route::delete('admin/admins/{admin}', [AdminController::class, 'destroy'])->name('admin.destroy')->middleware('user.type:admin');
+    
+    Route::get('admin/reports/last-consultations', [DashboardController::class, 'getLastFiveCompletedConsultationsApi'])->name('admin.reports.last-consultations')->middleware('user.type:admin');
+    Route::get('admin/reports/monthly-revenue', [DashboardController::class, 'getMonthlyRevenueApi'])->name('admin.reports.monthly-revenue')->middleware('user.type:admin');
 
     Route::get('admin/doctors/{doctor}', [DoctorController::class, 'show'])->name('doctor.show')->middleware('user.type:admin');
     Route::post('admin/doctors', [DoctorController::class, 'store'])->name('doctor.store')->middleware('user.type:admin');
@@ -45,10 +48,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('receptionist/patients/{patient}', [PatientController::class, 'destroy'])->name('patient.destroy')->middleware('user.type:receptionist');
 
     Route::get('doctor/start-consultation', [DoctorController::class, 'startConsultation'])->name('doctor.start-consultation')->middleware('user.type:doctor');
+    Route::post('doctor/finish-consultation', [DoctorController::class, 'finishConsultation'])->name('doctor.finish-consultation')->middleware('user.type:doctor');
 
     Route::post('receptionist/appointments', [AppointmentController::class, 'store'])->name('appointment.store')->middleware('user.type:receptionist');
     Route::get('receptionist/appointments/patients', [AppointmentController::class, 'getPatients'])->name('appointment.patients')->middleware('user.type:receptionist');
     Route::get('receptionist/appointments/doctors', [AppointmentController::class, 'getDoctors'])->name('appointment.doctors')->middleware('user.type:receptionist');
+    
+    // Rota para testar CSRF token
+    Route::get('/csrf-token', function () {
+        return response()->json(['token' => csrf_token()]);
+    })->middleware('web');
 });
 
 require __DIR__.'/settings.php';
