@@ -37,7 +37,19 @@ interface ReceptionistDashboardProps {
         pending_today: number;
         cancelled_today: number;
     };
-    weekly_appointments: any[];
+    weekly_appointments: Array<{
+        id: number;
+        appointment_date: string;
+        patient: {
+            name: string;
+        };
+        doctor: {
+            user: {
+                name: string;
+            };
+        };
+        status: string;
+    }>;
 }
 
 export default function ReceptionistDashboard({ user, daily_summary, weekly_appointments }: ReceptionistDashboardProps) {
@@ -78,7 +90,7 @@ export default function ReceptionistDashboard({ user, daily_summary, weekly_appo
                             labels={['Consultas do Dia', 'Atendidos', 'Cancelados']}
                             data={[daily_summary.appointments_today, daily_summary.completed_today, daily_summary.cancelled_today]}
                         />
-                        <DashboardCalendar title="Consultas da Semana"/>
+                        <DashboardCalendar title="Consultas da Semana" appointments={weekly_appointments}/>
                     </div>
                 </div>
             </div>

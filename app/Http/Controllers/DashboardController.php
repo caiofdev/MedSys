@@ -105,9 +105,9 @@ class DashboardController extends Controller
                 'month' => $doctor->appointments()->whereMonth('appointment_date', now()->month)->count(),
             ],
             'upcoming_appointments' => $doctor->appointments()
-                ->where('appointment_date', '>=', now())
+                ->whereBetween('appointment_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->with('patient')
                 ->orderBy('appointment_date')
-                ->limit(5)
                 ->get(),
         ];
 
@@ -133,6 +133,7 @@ class DashboardController extends Controller
                 'cancelled_today' => \App\Models\Appointment::whereDate('appointment_date', today())->where('status', 'canceled')->count(),
             ],
             'weekly_appointments' => \App\Models\Appointment::whereBetween('appointment_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->with(['patient', 'doctor.user'])
                 ->orderBy('appointment_date')
                 ->get(),
         ];
