@@ -49,26 +49,9 @@ class PatientController extends Controller
                 'medical_history' => $validated['medical_history'] ?? '',
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Paciente criado com sucesso.',
-                'patient' => [
-                    'id' => $patient->id,
-                    'name' => $patient->name,
-                    'email' => $patient->email,
-                    'cpf' => $patient->cpf,
-                    'phone' => $patient->phone,
-                    'gender' => $patient->gender,
-                    'birth_date' => $patient->birth_date,
-                    'emergency_contact' => $patient->emergency_contact,
-                    'medical_history' => $patient->medical_history,
-                ]
-            ]);
+            return back()->with('success', 'Paciente criado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao criar paciente: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao criar paciente: ' . $e->getMessage()]);
         }
     }
 
@@ -108,26 +91,9 @@ class PatientController extends Controller
                 'medical_history' => $validated['medical_history'] ?? $patient->medical_history,
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Paciente atualizado com sucesso.',
-                'patient' => [
-                    'id' => $patient->id,
-                    'name' => $patient->name,
-                    'email' => $patient->email,
-                    'phone' => $patient->phone,
-                    'cpf' => $patient->cpf,
-                    'gender' => $patient->gender,
-                    'birth_date' => $patient->birth_date,
-                    'emergency_contact' => $patient->emergency_contact,
-                    'medical_history' => $patient->medical_history,
-                ]
-            ]);
+            return back()->with('success', 'Paciente atualizado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao atualizar paciente: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao atualizar paciente: ' . $e->getMessage()]);
         }
     }
 
@@ -136,15 +102,9 @@ class PatientController extends Controller
         try {
             $patient->delete();
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Paciente deletado com sucesso.'
-            ]);
+            return back()->with('success', 'Paciente deletado com sucesso.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao deletar paciente: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['message' => 'Erro ao deletar paciente: ' . $e->getMessage()]);
         }
     }
 }
