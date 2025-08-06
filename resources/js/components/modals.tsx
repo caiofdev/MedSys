@@ -563,18 +563,20 @@ function ModalView({ user, type }: ModalProps)  {
             <DialogDescription className=" flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar">
             {user ? (
                 <>
-                <div className="flex justify-center">
-                    <Avatar className="h-22 w-22 rounded-full border-2 border-[#9FA3AE]">
-                    <AvatarImage 
-                        src={user.photo} 
-                        alt={user.name} 
-                        className="object-cover w-full h-full rounded-full"
-                    />
-                    <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
-                        {getInitials(user.name)}
-                    </AvatarFallback>
-                    </Avatar>
-                </div>
+                    {type !== "patient" && (
+                        <div className="flex justify-center">
+                            <Avatar className="h-22 w-22 rounded-full border-2 border-[#9FA3AE]">
+                                <AvatarImage
+                                    src={user.photo}
+                                    alt={user.name}
+                                    className="object-cover w-full h-full rounded-full"
+                                />
+                                <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
+                                    {getInitials(user.name)}
+                                </AvatarFallback>
+                            </Avatar>
+                        </div>
+                    )}
                 <InputField label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={user.name} disabled />
                 <InputField label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} value={user.email} disabled />
                 <div className="flex gap-3">
@@ -703,7 +705,6 @@ function ModalEdit({ user, type }: ModalProps) {
             _method: 'PUT',
         };
 
-        // Adicionar campos específicos do tipo apenas se existirem
         if (type === 'patient') {
             if (formData.medical_history !== undefined) {
             submitData.medical_history = formData.medical_history;
@@ -781,28 +782,30 @@ function ModalEdit({ user, type }: ModalProps) {
             <DialogTitle className="text-white text-center p-2">Editar {user ? user.name : type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
             
             <DialogDescription className="flex-col max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar">
-            <div className="flex flex-col items-center gap-2">
-                <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
-                    <AvatarImage 
-                        src={preview} 
-                        alt={user.name} 
-                        className="object-cover w-full h-full rounded-full"
-                    />
-                    <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
-                        {getInitials(user.name)}
-                    </AvatarFallback>
-                </Avatar>
-                <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
-                    Editar Foto
-                    <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleImageChange} 
-                        className="hidden" 
-                    />
-                </label>
-            </div>
+            {type !== "patient" && (
+                <div className="flex flex-col items-center gap-2">
+                    <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
+                        <AvatarImage 
+                            src={preview} 
+                            alt={user.name} 
+                            className="object-cover w-full h-full rounded-full"
+                        />
+                        <AvatarFallback className="bg-[#9fa3ae63] text-2xl">
+                            {getInitials(user.name)}
+                        </AvatarFallback>
+                    </Avatar>
+                    <label className="bg-[#9fa3ae63] p-1 rounded cursor-pointer text-sm">
+                        Editar Foto
+                        <input 
+                            ref={fileInputRef}
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleImageChange} 
+                            className="hidden" 
+                        />
+                    </label>
+                </div>
+            )}
 
             <InputField label="Nome" icon={<FontAwesomeIcon icon={faUser} />} name="name" value={formData.name} onChange={handleChange} />
             <InputField label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} name="email" value={formData.email} onChange={handleChange} />
@@ -975,11 +978,12 @@ function ModalCreate ({user, type}: ModalProps){
             <DialogHeader className="flex-shrink-0">
                 <DialogTitle className="text-white text-center p-2">Criar {type === "admin" ? "Administrador" : type === "receptionist" ? "Recepcionista" : type === "doctor" ? "Doutor" : "Paciente"}</DialogTitle>
                 <DialogDescription className="max-h-[86vh] bg-white p-4 rounded-b-2xl space-y-4 text-[#030D29] overflow-y-auto flex-1 custom-scrollbar flex-col">
-                    <div className="flex flex-col items-center gap-2">
-                        <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
-                            <AvatarImage 
-                                src={preview} 
-                                alt="Preview" 
+                    {type !== "patient" && (
+                        <div className="flex flex-col items-center gap-2">
+                            <Avatar className="h-24 w-24 border-2 border-[#9FA3AE]">
+                                <AvatarImage
+                                    src={preview}
+                                    alt="Preview"
                                 className="object-cover w-full h-full rounded-full"
                             />
                             <AvatarFallback className="bg-gray-200 text-gray-600 flex items-center justify-center">
@@ -996,7 +1000,8 @@ function ModalCreate ({user, type}: ModalProps){
                                 className="hidden" 
                             />
                         </label>
-                    </div>
+                        </div>
+                    )}
                     <InputField name="name" label="Nome" icon={<FontAwesomeIcon icon={faUser} />} value={formData.name} placeholder="Digite o nome" onChange={handleChange} />
                     <InputField name="email" label="E-mail" icon={<FontAwesomeIcon icon={faEnvelope} />} value={formData.email} placeholder="Digite o e-mail" onChange={handleChange} />
                     {type !== "patient" && (
