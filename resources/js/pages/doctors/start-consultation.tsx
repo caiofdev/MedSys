@@ -55,6 +55,7 @@ interface ConsultationData {
 interface StartConsultationProps {
     appointments: Appointment[];
     patients: Patient[];
+    userRole: 'admin' | 'doctor' | 'receptionist' | 'patient';
     flash?: {
         success?: string;
         error?: string;
@@ -136,7 +137,7 @@ const formatCurrency = (value: number | string): string => {
 };
 
 
-export default function StartConsultation({ appointments, patients, flash }: StartConsultationProps) {
+export default function StartConsultation({ appointments, patients, userRole, flash }: StartConsultationProps) {
 
     const [selectedPatient, setSelectedPatient] = useState<string>('');
     const [selectedAppointment, setSelectedAppointment] = useState<string>('');
@@ -203,7 +204,7 @@ export default function StartConsultation({ appointments, patients, flash }: Sta
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs} userRole="doctor">
+        <AppLayout breadcrumbs={breadcrumbs} userRole={userRole}>
             <Head title="Iniciar Atendimento" />
             <div className="min-h-screen p-6">
                 <div className="max-w-7xl mx-auto space-y-8">
@@ -261,7 +262,7 @@ export default function StartConsultation({ appointments, patients, flash }: Sta
                                                             label: patient.name,
                                                         }))
                                                     ]}
-                                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedPatient(e.target.value)}
+                                                    onChange={(e) => setSelectedPatient(e.target.value)}
                                                 />
                                             </div>
 

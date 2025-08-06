@@ -466,7 +466,10 @@ function ModalProvider({ children }: { children: ReactNode }) {
         });
         
         setPreview(user.photo || "");
-        setGender(user.gender || "Selecione o gênero");
+        
+        // Sincronizar o estado gender com formData.gender para compatibilidade
+        setGender(user.gender || "");
+        
         setIsMaster(
             typeof user.is_master === 'boolean' 
                 ? (user.is_master ? "yes" : "no")
@@ -620,7 +623,7 @@ function ModalView({ user, type }: ModalProps)  {
                 { type=="patient" && (
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-3">
-                            <InputField label="Gênero" icon={""} value={user.gender ?? ""} disabled />
+                            <InputField label="Gênero" icon={""} value={user.gender === 'male' ? 'Masculino' : 'Feminino'} disabled />
                         </div>
                             <InputField
                                 label="Contato de Emergência"
@@ -700,10 +703,29 @@ function ModalEdit({ user, type }: ModalProps) {
             _method: 'PUT',
         };
 
+        // Adicionar campos específicos do tipo apenas se existirem
         if (type === 'patient') {
-            submitData.medical_history = formData.medical_history || '';
-            submitData.emergency_contact = formData.emergency_contact || '';
-            submitData.gender = formData.gender || '';
+            if (formData.medical_history !== undefined) {
+            submitData.medical_history = formData.medical_history;
+            }
+            if (formData.emergency_contact !== undefined) {
+            submitData.emergency_contact = formData.emergency_contact;
+            }
+            if (formData.gender !== undefined) {
+            submitData.gender = formData.gender;
+            }
+        }
+
+        if (type === 'admin' && formData.is_master !== undefined) {
+            submitData.is_master = formData.is_master;
+        }
+
+        if (type === 'doctor' && formData.crm !== undefined) {
+            submitData.crm = formData.crm;
+        }
+
+        if (type === 'receptionist' && formData.register_number !== undefined) {
+            submitData.register_number = formData.register_number;
         }
 
         if (fileInputRef.current?.files?.[0]) {
@@ -792,13 +814,13 @@ function ModalEdit({ user, type }: ModalProps) {
                         label="Contato de Emergência"
                         icon={<FontAwesomeIcon icon={faCommentMedical} />}
                         name="emergency_contact"
-                        value={formData.emergency_contact ?? ""}
+                        value={formData.emergency_contact}
                         onChange={handleChange}
                     />
                     <SelectField
                         label="Gênero"
                         name="gender"
-                        value={gender}
+                        value={formData.gender}
                         onChange={handleSelectChange}
                         options={[
                         { label: "Feminino", value: "female" },

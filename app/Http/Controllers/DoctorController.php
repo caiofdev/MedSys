@@ -23,7 +23,8 @@ class DoctorController extends Controller
             'doctors' => $doctors,
             'filters' => [
                 'search' => $search,
-            ]
+            ],
+            'userRole' => 'admin'
         ]);
     }
 
@@ -141,7 +142,6 @@ class DoctorController extends Controller
             return redirect()->route('doctor.dashboard')->withErrors(['message' => 'Acesso negado.']);
         }
 
-        // Buscar appointments do médico logado que estão agendados
         $appointments = \App\Models\Appointment::with(['patient'])
             ->where('doctor_id', $doctor->id)
             ->where('status', 'scheduled')
@@ -149,18 +149,17 @@ class DoctorController extends Controller
             ->orderBy('appointment_date', 'asc')
             ->get();
 
-        // Buscar todos os pacientes para o select
         $patients = \App\Models\Patient::whereHas('appointments', function ($query) use ($doctor) {
-            $query->where('doctor_id', $doctor->id)
-                  ->where('status', 'scheduled');
-            })
-            ->select('id', 'name', 'email', 'cpf', 'phone', 'birth_date', 'gender', 'emergency_contact', 'medical_history')
-            ->orderBy('name', 'asc')
-            ->get();
+            $query->where('doctor_id', $doctor->id);
+        })
+        ->select('id', 'name', 'email', 'cpf', 'phone', 'birth_date', 'gender', 'emergency_contact', 'medical_history')
+        ->orderBy('name', 'asc')
+        ->get();
 
         return Inertia::render('doctors/start-consultation', [
             'appointments' => $appointments,
-            'patients' => $patients
+            'patients' => $patients,
+            'userRole' => 'doctor'
         ]);
     }
 
