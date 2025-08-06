@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use Inertia\Inertia;
 
 class AppointmentController extends Controller
 {
@@ -19,6 +20,11 @@ class AppointmentController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('AppointmentController::store - Dados recebidos', ['data' => $request->all()]);
+        \Log::info('AppointmentController::store - Headers', ['headers' => $request->headers->all()]);
+        \Log::info('AppointmentController::store - CSRF Token da sessão', ['csrf_token' => csrf_token()]);
+        \Log::info('AppointmentController::store - CSRF Token do request', ['request_csrf_token' => $request->header('X-CSRF-TOKEN')]);
+        
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'doctor_id' => 'required|exists:doctors,id',
@@ -42,10 +48,7 @@ class AppointmentController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors()->first()
-            ], 422);
+            return back()->withErrors($validator->errors());
         }
 
         try {
@@ -57,10 +60,7 @@ class AppointmentController extends Controller
                 ->first();
 
             if ($existingAppointment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Este médico já possui uma consulta agendada para este horário'
-                ], 422);
+                return back()->withErrors(['message' => 'Este médico já possui uma consulta agendada para este horário']);
             }
 
             $patientConflict = Appointment::where('patient_id', $request->patient_id)
@@ -69,10 +69,7 @@ class AppointmentController extends Controller
                 ->first();
 
             if ($patientConflict) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Este paciente já possui uma consulta agendada para este horário'
-                ], 422);
+                return back()->withErrors(['message' => 'Este paciente já possui uma consulta agendada para este horário']);
             }
 
             $user = Auth::user();
@@ -89,34 +86,12 @@ class AppointmentController extends Controller
 
             $appointment->load(['patient', 'doctor', 'receptionist']);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Consulta agendada com sucesso!',
-                'appointment' => [
-                    'id' => $appointment->id,
-                    'date' => $appointment->appointment_date->format('d/m/Y'),
-                    'time' => $appointment->appointment_date->format('H:i'),
-                    'value' => 'R$ ' . number_format($appointment->value, 2, ',', '.'),
-                    'status' => $appointment->status,
-                    'patient' => [
-                        'id' => $appointment->patient->id,
-                        'name' => $appointment->patient->name,
-                    ],
-                    'doctor' => [
-                        'id' => $appointment->doctor->id,
-                        'name' => $appointment->doctor->user->name,
-                        'crm' => $appointment->doctor->crm,
-                    ]
-                ]
-            ], 201);
+            return back()->with('success', 'Consulta agendada com sucesso!');
 
         } catch (\Exception $e) {
-            \Log::error('Erro ao criar consulta: ' . $e->getMessage());
+            \Log::error('Erro ao criar consulta', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno do servidor. Tente novamente.'
-            ], 500);
+            return back()->withErrors(['message' => 'Erro interno do servidor. Tente novamente.']);
         }
     }
 
