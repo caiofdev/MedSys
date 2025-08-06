@@ -213,4 +213,116 @@ class DoctorController extends Controller
             return back()->withErrors(['message' => 'Erro interno do servidor. Tente novamente.']);
         }
     }
+
+    public function medicalRecords()
+    {
+        $user = auth()->user();
+        $doctor = $user->doctor;
+        
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->withErrors(['message' => 'Acesso negado.']);
+        }
+
+        // Buscar pacientes que já tiveram consultas com este médico
+        $patients = \App\Models\Patient::whereHas('appointments', function ($query) use ($doctor) {
+            $query->where('doctor_id', $doctor->id)
+                  ->where('status', 'completed');
+        })
+        ->with(['appointments' => function ($query) use ($doctor) {
+            $query->where('doctor_id', $doctor->id)
+                  ->where('status', 'completed')
+                  ->with('consultation');
+        }])
+        ->select('id', 'name', 'email', 'cpf', 'phone', 'birth_date', 'gender', 'emergency_contact', 'medical_history')
+        ->orderBy('name', 'asc')
+        ->get();
+
+        // Buscar todas as consultas concluídas deste médico
+        $consultationData = \App\Models\Consultation::whereHas('appointment', function ($query) use ($doctor) {
+            $query->where('doctor_id', $doctor->id)
+                  ->where('status', 'completed');
+        })
+        ->with(['appointment.patient'])
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+        return Inertia::render('doctors/medical-record', [
+            'patients' => $patients,
+            'doctor' => $doctor->load('user'),
+            'consultationData' => $consultationData,
+            'userRole' => 'doctor'
+        ]);
+    }
+
+    public function showMedicalRecord($patientId)
+    {
+        $user = auth()->user();
+        $doctor = $user->doctor;
+        
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->withErrors(['message' => 'Acesso negado.']);
+        }
+
+        // Verificar se o paciente teve consultas com este médico
+        $patient = \App\Models\Patient::whereHas('appointments', function ($query) use ($doctor) {
+            $query->where('doctor_id', $doctor->id)
+                  ->where('status', 'completed');
+        })
+        ->where('id', $patientId)
+        ->first();
+
+        if (!$patient) {
+            return redirect()->route('doctor.medical-record')->withErrors(['message' => 'Paciente não encontrado ou sem consultas realizadas.']);
+        }
+
+        // Buscar todas as consultas deste paciente com este médico
+        $consultations = \App\Models\Consultation::whereHas('appointment', function ($query) use ($doctor, $patientId) {
+            $query->where('doctor_id', $doctor->id)
+                  ->where('patient_id', $patientId)
+                  ->where('status', 'completed');
+        })
+        ->with(['appointment'])
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($consultation) {
+            return [
+                'id' => $consultation->id,
+                'date' => $consultation->appointment->appointment_date,
+                'type' => 'Consulta Médica', // Pode ser expandido para diferentes tipos
+                'diagnosis' => $consultation->diagnosis,
+                'symptoms' => $consultation->symptoms,
+                'notes' => $consultation->notes,
+            ];
+        });
+
+        // Histórico médico simulado - pode ser expandido com dados reais
+        $medicalHistory = [
+            'allergies' => [
+                'Penicilina',
+                'Ácido acetilsalicílico (AAS)',
+                'Amendoim'
+            ],
+            'medications' => [
+                'Losartana 50mg - 1x ao dia',
+                'Metformina 500mg - 2x ao dia',
+                'Omeprazol 20mg - 1x ao dia'
+            ],
+            'conditions' => [
+                'Hipertensão arterial',
+                'Diabetes tipo 2',
+                'Gastrite crônica'
+            ],
+            'surgeries' => [
+                'Apendicectomia (2018)',
+                'Colecistectomia laparoscópica (2020)'
+            ]
+        ];
+
+        return Inertia::render('doctors/individual-medical-record', [
+            'patient' => $patient,
+            'consultations' => $consultations,
+            'medicalHistory' => $medicalHistory,
+            'userRole' => 'doctor'
+        ]);
+    }
 }

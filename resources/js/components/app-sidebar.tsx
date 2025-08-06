@@ -47,13 +47,8 @@ const doctorNavItems: NavItem[] = [
     },
     {
         title: 'Prontuários',
-        href: '/doctor/medical-records',
+        href: '/doctor/medical-record',
         icon: ClipboardList,
-    },
-    {
-        title: 'Solicitar xExames',
-        href: '/doctor/exams',
-        icon: Activity,
     },
 ];
 
