@@ -23,7 +23,8 @@ class AdminController extends Controller
             'admins' => $admins,
             'filters' => [
                 'search' => $search,
-            ]
+            ],
+            'userRole' => 'admin'
         ]);
     }
 
@@ -82,6 +83,7 @@ class AdminController extends Controller
             'phone' => $admin->user->phone,
             'photo' => $admin->user->photo ? asset('storage/' . $admin->user->photo) : null,
             'is_master' => $admin->is_master,
+            'birth_date' => $admin->user->birth_date,
         ]);
     }
 

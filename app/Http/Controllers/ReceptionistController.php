@@ -23,7 +23,8 @@ class ReceptionistController extends Controller
             'receptionists' => $receptionists,
             'filters' => [
                 'search' => $search,
-            ]
+            ],
+            'userRole' => 'admin'
         ]);
     }
 

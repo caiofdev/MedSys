@@ -20,7 +20,8 @@ class PatientController extends Controller
             'patients' => $patients,
             'filters' => [
                 'search' => $search,
-            ]
+            ],
+            'userRole' => 'receptionist'
         ]);
     }
 

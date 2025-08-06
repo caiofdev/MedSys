@@ -44,9 +44,10 @@ interface AdminTableProps {
     filters: {
         search: string;
     };
+    userRole: 'admin' | 'doctor' | 'receptionist' | 'patient';
 }
 
-export default function AdminTable({ admins, filters }: AdminTableProps) {
+export default function AdminTable({ admins, filters, userRole }: AdminTableProps) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
 
     const tableData = admins.data.map(admin => ({
@@ -79,7 +80,7 @@ export default function AdminTable({ admins, filters }: AdminTableProps) {
     }, [searchTerm]);
 
     return(
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} userRole={userRole}>
             <Head title="Admin Table" />
             <div className="flex flex-col space-y-6 justify-center mt-5">
                 <div className='flex flex-row justify-between ml-30 mr-30'>

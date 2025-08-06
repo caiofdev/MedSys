@@ -46,7 +46,7 @@ class DashboardController extends Controller
             ]
         ];
 
-        return Inertia::render('dashboards/admin-dashboard', $dashboardData);
+        return Inertia::render('dashboards/admin-dashboard', array_merge($dashboardData, ['userRole' => 'admin']));
     }
 
     public function doctorDashboard()
@@ -74,7 +74,7 @@ class DashboardController extends Controller
                 ->get(),
         ];
 
-        return Inertia::render('dashboards/doctor-dashboard', $dashboardData);
+        return Inertia::render('dashboards/doctor-dashboard', array_merge($dashboardData, ['userRole' => 'doctor']));
     }
 
     public function receptionistDashboard()
@@ -100,6 +100,6 @@ class DashboardController extends Controller
                 ->get(),
         ];
 
-        return Inertia::render('dashboards/receptionist-dashboard', $dashboardData);
+        return Inertia::render('dashboards/receptionist-dashboard', array_merge($dashboardData, ['userRole' => 'receptionist']));
     }
 }

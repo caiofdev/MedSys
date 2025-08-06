@@ -46,9 +46,10 @@ interface ReceptionistTableProps {
     filters: {
         search: string;
     };
+    userRole: 'admin' | 'doctor' | 'receptionist' | 'patient';
 }
 
-export default function ReceptionistTable({ receptionists, filters }: ReceptionistTableProps) {
+export default function ReceptionistTable({ receptionists, filters, userRole }: ReceptionistTableProps) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
 
     const tableData = receptionists.data.map(receptionist => ({
@@ -80,7 +81,7 @@ export default function ReceptionistTable({ receptionists, filters }: Receptioni
     }, [searchTerm]);
 
     return(
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} userRole={userRole}>
             <Head title="Receptionist Table" />
             <div className="flex flex-col space-y-6 justify-center mt-5">
                 <div className='flex flex-row justify-between ml-30 mr-30'>

@@ -60,18 +60,13 @@ const doctorNavItems: NavItem[] = [
 const receptionistNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: '/receptionist-dashboard',
+        href: '/receptionist/dashboard',
         icon: LayoutGrid,
     },
     {
         title: 'Pacientes',
         href: '/receptionist/patients',
         icon: Users,
-    },
-    {
-        title: 'Agendamentos',
-        href: '/receptionist/appointments',
-        icon: Calendar,
     },
 
     {
