@@ -8,6 +8,7 @@ import DashboardProfile from '@/components/dashboard-user-profile';
 import DashboardPieChart from '@/components/dashboard-pie-charts';
 import DashboardTotal from '@/components/dashboard-monthly-total';
 import DashboardMonthlySales from '@/components/dashboard-monthly-sales';
+import DashboardMonthlyComparison from '@/components/dashboard-monthly-comparison';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -30,9 +31,42 @@ interface AdminDashboardProps {
         total_users: number;
     };
     recent_activities: any[];
+    completed_consultations: {
+        labels: string[];
+        data: number[];
+        total_value: number;
+    };
+    monthly_revenue: {
+        current_month: {
+            revenue: number;
+            consultations_count: number;
+            month_name: string;
+            formatted_revenue: string;
+        };
+        previous_month: {
+            revenue: number;
+            consultations_count: number;
+            month_name: string;
+            formatted_revenue: string;
+        };
+        comparison: {
+            revenue_difference: number;
+            revenue_growth_percentage: number;
+            consultations_difference: number;
+            formatted_difference: string;
+        };
+        chart_data: number[];
+        chart_labels: string[];
+    };
 }
 
-export default function AdminDashboard({ user, stats, recent_activities }: AdminDashboardProps) {
+export default function AdminDashboard({ 
+    user, 
+    stats, 
+    recent_activities, 
+    completed_consultations, 
+    monthly_revenue 
+}: AdminDashboardProps) {
     return (
     <AppLayout breadcrumbs={breadcrumbs} userRole="admin">
         <Head title="Admin Dashboard" />
@@ -71,12 +105,16 @@ export default function AdminDashboard({ user, stats, recent_activities }: Admin
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <DashboardTotal currentTotal={6000.99} previousTotal={9000}/>
+                        <DashboardTotal 
+                            currentTotal={monthly_revenue?.current_month?.revenue || 0} 
+                            previousTotal={monthly_revenue?.previous_month?.revenue || 0}
+                        />
                         <DashboardMonthlySales
-                            title="Vendas Mensais"
-                            labels={['Venda 1', 'Venda 2', 'Venda 3', 'Venda 4', 'Venda 5']}
-                            data={[300, 450, 200, 580, 390]}
+                            title="Últimas Vendas"
+                            labels={completed_consultations?.labels || ['Sem dados']}
+                            data={completed_consultations?.data || [0]}
                             barColors={['03045e', '0077b6', '00b4d8', '90e0ef', '84bcda']}
+                            currency={true}
                         />
                     </div>
                 </div>

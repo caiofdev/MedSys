@@ -28,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('admin/admins', [AdminController::class, 'store'])->name('admin.store')->middleware('user.type:admin');
     Route::put('admin/admins/{admin}', [AdminController::class, 'update'])->name('admin.update')->middleware('user.type:admin');
     Route::delete('admin/admins/{admin}', [AdminController::class, 'destroy'])->name('admin.destroy')->middleware('user.type:admin');
+    
+    Route::get('admin/reports/last-consultations', [DashboardController::class, 'getLastFiveCompletedConsultationsApi'])->name('admin.reports.last-consultations')->middleware('user.type:admin');
+    Route::get('admin/reports/monthly-revenue', [DashboardController::class, 'getMonthlyRevenueApi'])->name('admin.reports.monthly-revenue')->middleware('user.type:admin');
 
     Route::get('admin/doctors/{doctor}', [DoctorController::class, 'show'])->name('doctor.show')->middleware('user.type:admin');
     Route::post('admin/doctors', [DoctorController::class, 'store'])->name('doctor.store')->middleware('user.type:admin');

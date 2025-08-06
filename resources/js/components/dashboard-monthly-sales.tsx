@@ -16,14 +16,28 @@ type BarChartProps = {
     labels: string[];
     data: number[];
     barColors: string[];
+    totalValue?: number;
+    currency?: boolean;
 };
 
-export default function DashboardMonthlySales({ title, labels, data, barColors }: BarChartProps) {
+export default function DashboardMonthlySales({ 
+    title, 
+    labels, 
+    data, 
+    barColors, 
+    totalValue, 
+    currency = false 
+}: BarChartProps) {
+    const formatoBRL = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+
     const chartData = {
         labels,
         datasets: [
         {
-            label: 'Vendas',
+            label: currency ? 'Valor (R$)' : 'Vendas',
             data,
             backgroundColor: barColors.map(barColors => `#${barColors}`),
         },
@@ -36,6 +50,16 @@ const options: ChartOptions<'bar'> = {
         legend: {
             display: false,
         },
+        tooltip: {
+            callbacks: {
+                label: function(context) {
+                    if (currency) {
+                        return `Valor: ${formatoBRL.format(context.parsed.y)}`;
+                    }
+                    return `Vendas: ${context.parsed.y}`;
+                }
+            }
+        }
     },
     scales: {
         x: {
@@ -73,6 +97,13 @@ const options: ChartOptions<'bar'> = {
                     <div className='h-full p-4'>
                         <Bar data={chartData} options={options} />
                     </div>
+                    {totalValue !== undefined && (
+                        <div className='pb-2'>
+                            <p className='text-sm font-semibold text-gray-700'>
+                                Total: {currency ? formatoBRL.format(totalValue) : totalValue}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
