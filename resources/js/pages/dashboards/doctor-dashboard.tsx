@@ -41,7 +41,7 @@ export default function DoctorDashboard({ user, appointments, upcoming_appointme
                         <DashboardProfile userName={user.name} imgPath={user.avatar} type={user.role} />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-2 grid grid-cols-3 gap-4 h-50">
+                        <div className="col-span-2 grid grid-cols-2 gap-4 h-full">
                             <DashboardCard 
                                 icon={faCirclePlay} 
                                 title="Iniciar Atendimento"
@@ -52,13 +52,7 @@ export default function DoctorDashboard({ user, appointments, upcoming_appointme
                                 icon={faClipboard} 
                                 title={"Visualizar Prontuários"} 
                                 color="D63384"
-                                route="/"
-                            />
-                            <DashboardCard 
-                                icon={faFileMedical} 
-                                title={"Solicitar Exames"} 
-                                color="FFC107"
-                                route="/"
+                                route="/doctor/medical-record"
                             />
                         </div>
                         <DashboardCalendar title='Meu Calendário' appointments={upcoming_appointments}/>

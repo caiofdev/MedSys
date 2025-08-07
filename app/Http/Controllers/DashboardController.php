@@ -141,9 +141,6 @@ class DashboardController extends Controller
         return Inertia::render('dashboards/receptionist-dashboard', array_merge($dashboardData, ['userRole' => 'receptionist']));
     }
 
-    /**
-     * Retorna os dados das cinco últimas consultas concluídas
-     */
     private function getLastFiveCompletedConsultations()
     {
         $consultations = \App\Models\Consultation::with(['appointment' => function($query) {
@@ -175,26 +172,20 @@ class DashboardController extends Controller
         ];
     }
 
-    /**
-     * Retorna os dados da receita do mês atual e do mês anterior
-     */
     private function getMonthlyRevenue()
     {
         $currentMonth = now()->startOfMonth();
         $previousMonth = now()->subMonth()->startOfMonth();
         $previousMonthEnd = now()->subMonth()->endOfMonth();
 
-        // Receita do mês atual
         $currentMonthRevenue = \App\Models\Appointment::where('status', 'completed')
             ->whereBetween('appointment_date', [$currentMonth, now()])
             ->sum('value');
 
-        // Receita do mês anterior
         $previousMonthRevenue = \App\Models\Appointment::where('status', 'completed')
             ->whereBetween('appointment_date', [$previousMonth, $previousMonthEnd])
             ->sum('value');
 
-        // Número de consultas concluídas por mês
         $currentMonthConsultations = \App\Models\Appointment::where('status', 'completed')
             ->whereBetween('appointment_date', [$currentMonth, now()])
             ->count();
@@ -203,7 +194,6 @@ class DashboardController extends Controller
             ->whereBetween('appointment_date', [$previousMonth, $previousMonthEnd])
             ->count();
 
-        // Calculando a diferença percentual
         $revenueGrowth = $previousMonthRevenue > 0 
             ? (($currentMonthRevenue - $previousMonthRevenue) / $previousMonthRevenue) * 100 
             : 0;
@@ -233,21 +223,41 @@ class DashboardController extends Controller
         ];
     }
 
-    /**
-     * Endpoint público para últimas consultas (para uso via AJAX se necessário)
-     */
     public function getLastFiveCompletedConsultationsApi()
     {
         $data = $this->getLastFiveCompletedConsultations();
         return response()->json($data);
     }
 
-    /**
-     * Endpoint público para receita mensal (para uso via AJAX se necessário)
-     */
     public function getMonthlyRevenueApi()
     {
         $data = $this->getMonthlyRevenue();
         return response()->json($data);
+    }
+
+    public function consultationsList(Request $request)
+    {
+        $search = $request->get('search', '');
+        
+        $consultations = \App\Models\Consultation::with(['appointment' => function($query) {
+            $query->with(['doctor.user', 'patient', 'receptionist.user']);
+        }])
+        ->when($search, function ($query) use ($search) {
+            $query->whereHas('appointment.patient', function($patientQuery) use ($search) {
+                $patientQuery->where('name', 'like', "%{$search}%");
+            })->orWhereHas('appointment.doctor.user', function($doctorQuery) use ($search) {
+                $doctorQuery->where('name', 'like', "%{$search}%");
+            })->orWhere('diagnosis', 'like', "%{$search}%");
+        })
+        ->orderBy('created_at', 'desc')
+        ->paginate(10)
+        ->withQueryString();
+
+        return Inertia::render('receptionists/consultations-list', [
+            'consultations' => $consultations,
+            'filters' => [
+                'search' => $search,
+            ]
+        ]);
     }
 }
