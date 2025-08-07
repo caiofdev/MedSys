@@ -18,7 +18,6 @@ class Patient extends Model
         'birth_date',
         'emergency_contact',
         'medical_history',
-        'address_id',
     ];
 
     public function appointments()
