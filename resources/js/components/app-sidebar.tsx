@@ -65,8 +65,8 @@ const receptionistNavItems: NavItem[] = [
     },
 
     {
-        title: 'Consultas',
-        href: '/receptionist/appointments',
+        title: 'Visualizar Consultas',
+        href: '/receptionist/consultations-list',
         icon: ClipboardPlus,
     },
     

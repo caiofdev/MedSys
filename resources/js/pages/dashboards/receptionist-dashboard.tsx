@@ -80,8 +80,8 @@ export default function ReceptionistDashboard({ user, daily_summary, weekly_appo
                             <DashboardCard 
                                 icon={faFileMedical} 
                                 title={"Visualizar Consultas"} 
-                                color='F46248'
-                                route="/"
+                                color="F46248"
+                                route="/receptionist/consultations-list"
                             />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
